@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(mkdir -p /Users/robartbyrobert/.claude/projects/-Users-robartbyrobert-sms-food-journal/memory/)"
+    ]
+  }
+}
