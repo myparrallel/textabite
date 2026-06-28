@@ -273,7 +273,16 @@ function dashboardPage(
     .meals-table td { padding: 10px 12px; border-bottom: 1px solid #f9fafb; color: #374151; }
     .meals-table tr:last-child td { border-bottom: none; }
     .saved-banner { background: #dcfce7; color: #15803d; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: 600; font-size: 0.9rem; }
-    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+    .meals-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .dashboard { padding: 20px 16px; }
+      nav { padding: 14px 20px; }
+      .dash-header h1 { font-size: 1.3rem; }
+      .stat .value { font-size: 1.4rem; }
+      .meals-table th:nth-child(4), .meals-table td:nth-child(4),
+      .meals-table th:nth-child(5), .meals-table td:nth-child(5) { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -401,7 +410,7 @@ function dashboardPage(
   <div class="section" style="margin-top:24px;">
     <h2>🍽️ Recent meals</h2>
     ${meals.length === 0 ? '<p style="color:#9ca3af;font-size:0.9rem;">No meals logged yet. Text your first meal!</p>' : `
-    <table class="meals-table">
+    <div class="meals-wrap"><table class="meals-table">
       <thead><tr><th>Meal</th><th>Cal</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>When</th></tr></thead>
       <tbody>
         ${meals.map(m => `<tr>
@@ -413,7 +422,7 @@ function dashboardPage(
           <td style="color:#9ca3af;font-size:0.82rem;">${new Date(m.logged_at).toLocaleDateString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</td>
         </tr>`).join('')}
       </tbody>
-    </table>`}
+    </table></div>`}
   </div>
 </div>
 

@@ -70,6 +70,7 @@ function landingPage(): string {
     nav .nav-links a { text-decoration: none; color: #555; font-size: 0.95rem; font-weight: 500; }
     nav .nav-links a.cta { background: #16a34a; color: #fff; padding: 10px 20px; border-radius: 8px; }
     nav .nav-links a.cta:hover { background: #15803d; }
+    nav .nav-links a.login { color: #374151; font-weight: 600; }
 
     /* HERO */
     .hero { background: linear-gradient(135deg, #f0fdf4 0%, #fff 60%); padding: 100px 24px 80px; text-align: center; }
@@ -199,6 +200,7 @@ function landingPage(): string {
   <div class="nav-links">
     <a href="#how">How it works</a>
     <a href="#pricing">Pricing</a>
+    <a href="/login" class="login">Log in</a>
     <a href="#faq">FAQ</a>
     <a href="#pricing" class="cta">Start for $7.99/mo</a>
   </div>
