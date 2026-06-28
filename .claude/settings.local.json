@@ -3,7 +3,11 @@
     "allow": [
       "Bash(npm install *)",
       "Bash(npx tsc *)",
-      "Bash(mkdir -p /Users/robartbyrobert/.claude/projects/-Users-robartbyrobert-sms-food-journal/memory/)"
+      "Bash(mkdir -p /Users/robartbyrobert/.claude/projects/-Users-robartbyrobert-sms-food-journal/memory/)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(npm run *)"
     ]
   }
 }

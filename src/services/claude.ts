@@ -6,6 +6,10 @@ const client = new Anthropic();
 
 export type Intent =
   | 'log_meal'
+  | 'log_water'
+  | 'delete_meal'
+  | 'correct_meal'
+  | 'weekly_summary'
   | 'should_i_eat'
   | 'goal_setting'
   | 'reminder_reply'
@@ -45,6 +49,10 @@ export async function detectIntent(text: string): Promise<Intent> {
 
 Intents:
 - log_meal: user is logging food they ate or are currently eating
+- log_water: user is logging water or a drink (e.g. "drank 2 glasses of water", "had a bottle of water")
+- delete_meal: user wants to delete or undo their last logged meal (e.g. "delete that", "undo last meal", "remove that entry")
+- correct_meal: user wants to correct or edit their last meal (e.g. "actually it was 2 eggs", "change that to a large fries")
+- weekly_summary: user wants a summary of their week (e.g. "how'd I do this week", "weekly recap", "show my week")
 - should_i_eat: user is asking whether they should eat something, if it fits their goals, or what they have left for the day
 - goal_setting: user wants to set or update their nutrition goals
 - reminder_reply: user is replying to a meal reminder (e.g. "yeah I had a salad", "nope skipped lunch")
@@ -54,7 +62,7 @@ Intents:
   });
 
   const raw = msg.content[0].type === 'text' ? msg.content[0].text.trim() : '';
-  const valid: Intent[] = ['log_meal', 'should_i_eat', 'goal_setting', 'reminder_reply', 'help', 'unknown'];
+  const valid: Intent[] = ['log_meal', 'log_water', 'delete_meal', 'correct_meal', 'weekly_summary', 'should_i_eat', 'goal_setting', 'reminder_reply', 'help', 'unknown'];
   return valid.includes(raw as Intent) ? (raw as Intent) : 'unknown';
 }
 
@@ -184,18 +192,20 @@ interface DailySummaryInput {
   meals: { description: string; calories: number; protein_g: number; carbs_g: number; fat_g: number }[];
   totals: DayTotals;
   goals?: UserGoals;
+  streak?: number;
 }
 
 export async function formatDailySummary(data: DailySummaryInput): Promise<string> {
   const goalsContext = data.goals?.calorie_goal
     ? `Their daily calorie goal is ${data.goals.calorie_goal} cal.`
     : '';
+  const streakContext = data.streak && data.streak > 1 ? `They're on a ${data.streak}-day logging streak 🔥` : '';
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 320,
-    system: `You are Textabite, a friendly nutrition buddy who texts like a real friend. Write a casual morning summary SMS. ${goalsContext}
-Keep it upbeat and personal. Mention total calories and one thing they did well or could improve. Plain text only, no markdown, under 300 chars.`,
+    system: `You are Textabite, a friendly nutrition buddy who texts like a real friend. Write a casual morning summary SMS. ${goalsContext} ${streakContext}
+Keep it upbeat and personal. Mention total calories and one thing they did well or could improve. If they have a streak, mention it! Plain text only, no markdown, under 300 chars.`,
     messages: [{
       role: 'user',
       content: `Yesterday's meals:\n${data.meals.map(m => `- ${m.description} (${m.calories} cal)`).join('\n')}\n\nTotals: ${data.totals.calories} cal, ${data.totals.protein_g}g protein, ${data.totals.carbs_g}g carbs, ${data.totals.fat_g}g fat`,
@@ -249,5 +259,75 @@ export async function generateReminder(label: string, userName?: string): Promis
 // ── Help reply ────────────────────────────────────────────────────────────────
 
 export async function helpReply(): Promise<string> {
-  return `Hey! Just text me what you eat and I'll track the nutrition 🥗 Snap a photo too if you want. Reply "goals" to set targets. Text STOP to unsubscribe.`;
+  return `Hey! Just text me what you eat and I'll track the nutrition 🥗 Snap a photo too! Say "delete that" to undo a meal, "log water" to track hydration, or "how'd I do this week?" for a weekly recap. Reply "goals" to set targets.`;
+}
+
+// ── Water parsing ─────────────────────────────────────────────────────────────
+
+export async function parseWater(text: string): Promise<{ amount_ml: number; reply: string }> {
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 150,
+    system: `You are Textabite. The user logged water. Parse the amount and convert to ml. Reply with JSON only:
+{ "amount_ml": <integer>, "reply": "<casual friendly confirmation under 100 chars>" }
+Common conversions: 1 cup = 237ml, 1 bottle = 500ml, 1 glass = 250ml, 1 oz = 30ml.`,
+    messages: [{ role: 'user', content: text }],
+  });
+  const raw = message.content[0].type === 'text' ? message.content[0].text.trim() : '';
+  return JSON.parse(raw);
+}
+
+// ── Correct meal parsing ──────────────────────────────────────────────────────
+
+export async function parseCorrection(text: string, lastMeal: string): Promise<string> {
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 100,
+    system: `The user wants to correct their last logged meal. Extract what the corrected meal description should be. Reply with just the corrected meal description, nothing else.`,
+    messages: [{ role: 'user', content: `Last meal: "${lastMeal}". User says: "${text}"` }],
+  });
+  return message.content[0].type === 'text' ? message.content[0].text.trim() : text;
+}
+
+// ── Weekly summary ────────────────────────────────────────────────────────────
+
+interface WeeklySummaryInput {
+  days: { date: string; calories: number; protein_g: number; meals: number }[];
+  totalCalories: number;
+  avgCalories: number;
+  streak: number;
+  goals?: UserGoals;
+}
+
+export async function formatWeeklySummary(data: WeeklySummaryInput): Promise<string> {
+  const goalsContext = data.goals?.calorie_goal ? `Daily calorie goal: ${data.goals.calorie_goal}.` : '';
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 320,
+    system: `You are Textabite giving a weekly recap over SMS. Be casual, encouraging, and specific. ${goalsContext}
+Mention avg daily calories, logging streak, and one highlight or suggestion. Plain text only, no markdown, under 300 chars.`,
+    messages: [{
+      role: 'user',
+      content: `Weekly data: ${JSON.stringify(data.days)}. Total: ${data.totalCalories} cal. Avg/day: ${data.avgCalories} cal. Logging streak: ${data.streak} days.`,
+    }],
+  });
+  return message.content[0].type === 'text' ? message.content[0].text.trim() : '';
+}
+
+// ── Streak calculation helper ─────────────────────────────────────────────────
+
+export function calcStreak(loggedDates: string[]): number {
+  if (loggedDates.length === 0) return 0;
+  const sorted = [...new Set(loggedDates)].sort().reverse();
+  let streak = 0;
+  let check = new Date();
+  check.setHours(0, 0, 0, 0);
+  for (const d of sorted) {
+    const day = new Date(d);
+    day.setHours(0, 0, 0, 0);
+    const diff = (check.getTime() - day.getTime()) / 86400000;
+    if (diff <= 1) { streak++; check = day; }
+    else break;
+  }
+  return streak;
 }

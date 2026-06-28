@@ -74,7 +74,15 @@ CREATE TABLE IF NOT EXISTS meals (
   logged_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS water_logs (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount_ml  INT NOT NULL,
+  logged_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS meals_user_logged      ON meals (user_id, logged_at DESC);
+CREATE INDEX IF NOT EXISTS water_logs_user        ON water_logs (user_id, logged_at DESC);
 CREATE INDEX IF NOT EXISTS subscriptions_user     ON subscriptions (user_id);
 CREATE INDEX IF NOT EXISTS otp_codes_phone        ON otp_codes (phone);
 CREATE INDEX IF NOT EXISTS sessions_token         ON sessions (token);

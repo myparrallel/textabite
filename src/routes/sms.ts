@@ -5,6 +5,10 @@ import {
   detectIntent,
   parseMeal,
   NeedsDescriptionError,
+  parseWater,
+  parseCorrection,
+  formatWeeklySummary,
+  calcStreak,
   mealConfirmationReply,
   shouldIEatThis,
   handleReminderReply,
@@ -41,10 +45,10 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 
   try {
     // Upsert user
-    const { rows: userRows } = await db.query<{ id: string; phone: string }>(
+    const { rows: userRows } = await db.query<{ id: string; phone: string; timezone: string }>(
       `INSERT INTO users (phone) VALUES ($1)
        ON CONFLICT (phone) DO UPDATE SET phone = EXCLUDED.phone
-       RETURNING id, phone`,
+       RETURNING id, phone, timezone`,
       [from]
     );
     const user = userRows[0];
@@ -186,6 +190,83 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 
         const reply = await shouldIEatThis(body, goals, totalsRows[0], mediaUrl);
         await sendSms(from, reply);
+        break;
+      }
+
+      case 'log_water': {
+        const { amount_ml, reply: waterReply } = await parseWater(body);
+        await db.query(
+          `INSERT INTO water_logs (user_id, amount_ml) VALUES ($1, $2)`,
+          [user.id, amount_ml]
+        );
+        const { rows: todayWater } = await db.query<{ total_ml: number }>(
+          `SELECT COALESCE(SUM(amount_ml), 0)::int AS total_ml FROM water_logs WHERE user_id = $1 AND logged_at >= NOW()::date`,
+          [user.id]
+        );
+        const totalOz = Math.round(todayWater[0].total_ml / 30);
+        await sendSms(from, `${waterReply} You've had ~${totalOz}oz today 💧`);
+        break;
+      }
+
+      case 'delete_meal': {
+        const { rows: lastMeal } = await db.query<{ id: string; description: string }>(
+          `SELECT id, description FROM meals WHERE user_id = $1 ORDER BY logged_at DESC LIMIT 1`,
+          [user.id]
+        );
+        if (lastMeal.length === 0) {
+          await sendSms(from, "No meals to delete! You haven't logged anything yet 🤷");
+        } else {
+          await db.query(`DELETE FROM meals WHERE id = $1`, [lastMeal[0].id]);
+          await sendSms(from, `Deleted "${lastMeal[0].description}" ✓ All good!`);
+        }
+        break;
+      }
+
+      case 'correct_meal': {
+        const { rows: lastMeal } = await db.query<{ id: string; description: string; raw_text: string }>(
+          `SELECT id, description, raw_text FROM meals WHERE user_id = $1 ORDER BY logged_at DESC LIMIT 1`,
+          [user.id]
+        );
+        if (lastMeal.length === 0) {
+          await sendSms(from, "No meal to correct — you haven't logged anything yet!");
+        } else {
+          const correctedText = await parseCorrection(body, lastMeal[0].description);
+          const nutrition = await parseMeal(correctedText);
+          await db.query(
+            `UPDATE meals SET raw_text=$1, calories=$2, protein_g=$3, carbs_g=$4, fat_g=$5, description=$6 WHERE id=$7`,
+            [correctedText, nutrition.calories, nutrition.protein_g, nutrition.carbs_g, nutrition.fat_g, nutrition.description, lastMeal[0].id]
+          );
+          await sendSms(from, `Updated! "${nutrition.description}" — ${nutrition.calories} cal, ${nutrition.protein_g}g protein ✓`);
+        }
+        break;
+      }
+
+      case 'weekly_summary': {
+        const { rows: weekMeals } = await db.query<{ date: string; calories: number; protein_g: number; meals: number }>(
+          `SELECT
+             DATE(logged_at AT TIME ZONE $2)::text AS date,
+             COALESCE(SUM(calories), 0)::int AS calories,
+             COALESCE(SUM(protein_g), 0)::numeric AS protein_g,
+             COUNT(*)::int AS meals
+           FROM meals
+           WHERE user_id = $1 AND logged_at >= NOW() - INTERVAL '7 days'
+           GROUP BY DATE(logged_at AT TIME ZONE $2)
+           ORDER BY date`,
+          [user.id, user.timezone ?? 'America/New_York']
+        );
+        const { rows: streakRows } = await db.query<{ date: string }>(
+          `SELECT DISTINCT DATE(logged_at AT TIME ZONE $2)::text AS date FROM meals WHERE user_id = $1 ORDER BY date DESC LIMIT 30`,
+          [user.id, user.timezone ?? 'America/New_York']
+        );
+        const streak = calcStreak(streakRows.map(r => r.date));
+        const totalCal = weekMeals.reduce((s, d) => s + d.calories, 0);
+        const avgCal = weekMeals.length > 0 ? Math.round(totalCal / weekMeals.length) : 0;
+        const goals: UserGoals | undefined = settings.calorie_goal ? {
+          calorie_goal: settings.calorie_goal,
+          protein_goal_g: settings.protein_goal_g,
+        } : undefined;
+        const summary = await formatWeeklySummary({ days: weekMeals, totalCalories: totalCal, avgCalories: avgCal, streak, goals });
+        await sendSms(from, summary);
         break;
       }
 

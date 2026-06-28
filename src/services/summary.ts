@@ -1,5 +1,5 @@
 import { db } from '../db/client';
-import { formatDailySummary, UserGoals } from './claude';
+import { formatDailySummary, UserGoals, calcStreak } from './claude';
 import { sendSms } from './twilio';
 
 export async function sendDailySummaries(userIds?: string[]): Promise<void> {
@@ -62,6 +62,12 @@ async function sendSummaryForUser(user: { id: string; phone: string; timezone: s
     fat_goal_g: settings.fat_goal_g,
   } : undefined;
 
-  const summary = await formatDailySummary({ meals, totals, goals });
+  const { rows: streakRows } = await db.query<{ date: string }>(
+    `SELECT DISTINCT DATE(logged_at AT TIME ZONE $2)::text AS date FROM meals WHERE user_id = $1 ORDER BY date DESC LIMIT 30`,
+    [user.id, user.timezone]
+  );
+  const streak = calcStreak(streakRows.map(r => r.date));
+
+  const summary = await formatDailySummary({ meals, totals, goals, streak });
   await sendSms(user.phone, summary);
 }
