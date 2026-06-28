@@ -4,6 +4,7 @@ import { db } from '../db/client';
 import {
   detectIntent,
   parseMeal,
+  NeedsDescriptionError,
   mealConfirmationReply,
   shouldIEatThis,
   handleReminderReply,
@@ -103,7 +104,17 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           await sendSms(from, parsed.response);
         }
 
-        const nutrition = await parseMeal(mealText, mediaUrl);
+        let nutrition;
+        try {
+          nutrition = await parseMeal(mealText, mediaUrl);
+        } catch (err) {
+          if (err instanceof NeedsDescriptionError) {
+            await sendSms(from, "Looks homemade! What's in it? Just a rough guess is fine 😊");
+            res.sendStatus(204);
+            return;
+          }
+          throw err;
+        }
 
         // Get today's totals before this meal
         const { rows: totalsRows } = await db.query<DayTotals>(

@@ -60,6 +60,8 @@ Intents:
 
 // ── Meal parsing ──────────────────────────────────────────────────────────────
 
+export class NeedsDescriptionError extends Error {}
+
 export async function parseMeal(rawText: string, imageUrl?: string): Promise<NutritionResult> {
   const content: Anthropic.MessageParam['content'] = imageUrl
     ? [
@@ -78,12 +80,17 @@ export async function parseMeal(rawText: string, imageUrl?: string): Promise<Nut
 - fat_g (number, one decimal)
 - description (short cleaned-up meal name)
 
-Use best estimates based on typical serving sizes.`,
+Use best estimates based on typical serving sizes.
+If the image is unclear, blurry, or the food cannot be identified with reasonable confidence, respond with exactly: {"needs_description": true}`,
     messages: [{ role: 'user', content }],
   });
 
   const text = message.content[0].type === 'text' ? message.content[0].text : '';
-  return JSON.parse(text) as NutritionResult;
+  const parsed = JSON.parse(text);
+
+  if (parsed.needs_description) throw new NeedsDescriptionError();
+
+  return parsed as NutritionResult;
 }
 
 // ── Meal confirmation replies ─────────────────────────────────────────────────
