@@ -71,6 +71,10 @@ function landingPage(): string {
     nav .nav-links a.cta { background: #16a34a; color: #fff; padding: 10px 20px; border-radius: 8px; }
     nav .nav-links a.cta:hover { background: #15803d; }
     nav .nav-links a.login { color: #374151; font-weight: 600; }
+    @media (max-width: 640px) {
+      nav { padding: 16px 20px; }
+      nav .nav-links .hide-mobile { display: none; }
+    }
 
     /* HERO */
     .hero { background: linear-gradient(135deg, #f0fdf4 0%, #fff 60%); padding: 100px 24px 80px; text-align: center; }
@@ -198,10 +202,10 @@ function landingPage(): string {
 <nav>
   <span class="logo">Textabite</span>
   <div class="nav-links">
-    <a href="#how">How it works</a>
-    <a href="#pricing">Pricing</a>
+    <a href="#how" class="hide-mobile">How it works</a>
+    <a href="#pricing" class="hide-mobile">Pricing</a>
     <a href="/login" class="login">Log in</a>
-    <a href="#faq">FAQ</a>
+    <a href="#faq" class="hide-mobile">FAQ</a>
     <a href="#pricing" class="cta">Start for $7.99/mo</a>
   </div>
 </nav>
@@ -225,8 +229,8 @@ function landingPage(): string {
 <!-- TRUST BAR -->
 <div class="trust-bar">
   <div class="trust-item"><span class="icon">🔒</span> Secured by Stripe</div>
-  <div class="trust-item"><span class="icon">📵</span> No app to download</div>
-  <div class="trust-item"><span class="icon">❌</span> Cancel anytime</div>
+  <div class="trust-item"><span class="icon">✅</span> No app to download</div>
+  <div class="trust-item"><span class="icon">✅</span> Cancel anytime</div>
   <div class="trust-item"><span class="icon">🤖</span> Powered by Claude AI</div>
   <div class="trust-item"><span class="icon">📱</span> Works on any carrier</div>
 </div>
