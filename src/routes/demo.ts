@@ -47,9 +47,10 @@ router.post('/chat', chatLimiter, async (req: Request, res: Response): Promise<v
       messages,
     });
     res.json(response);
-  } catch (err) {
-    console.error('Demo chat error:', err);
-    res.status(500).json({ error: 'AI error' });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('Demo chat error:', msg);
+    res.status(500).json({ error: 'AI error', detail: msg });
   }
 });
 

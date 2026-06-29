@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NourishLog — Food journaling by text</title>
+<title>Textabite — Food journaling by text</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -680,7 +680,7 @@
       <div class="phone-notch"></div>
       <div class="phone-screen">
         <div class="phone-header">
-          <div class="phone-contact">NourishLog</div>
+          <div class="phone-contact">Textabite</div>
           <div class="phone-contact-sub">+1 (555) 012-3456</div>
         </div>
         <div class="phone-messages">
@@ -737,7 +737,7 @@
   <div class="demo-panel" id="demo-panel">
     <div class="demo-header">
       <div class="demo-header-left">
-        <h3>NourishLog Demo</h3>
+        <h3>Textabite Demo</h3>
         <p>Type a meal or upload a food photo</p>
       </div>
       <div style="text-align:right">
@@ -748,7 +748,7 @@
 
     <div class="demo-messages" id="demo-messages">
       <div class="demo-msg ai">
-        <div class="demo-bubble">Hey! 👋 I'm your NourishLog demo. Text me any meal — describe it or upload a photo — and I'll log the calories and macros. Try something like "oatmeal with banana and peanut butter" or snap a picture of your lunch.</div>
+        <div class="demo-bubble">Hey! 👋 I'm your Textabite demo. Text me any meal — describe it or upload a photo — and I'll log the calories and macros. Try something like "oatmeal with banana and peanut butter" or snap a picture of your lunch.</div>
       </div>
     </div>
 
@@ -797,7 +797,7 @@
   let conversationHistory = [];
   let dailyLog = { calories: 0, protein: 0, carbs: 0, fat: 0, entries: [] };
 
-  const SYSTEM_PROMPT = `You are NourishLog, an SMS-based food journal assistant. Your job is to:
+  const SYSTEM_PROMPT = `You are Textabite, an SMS-based food journal assistant. Your job is to:
 1. Identify food items from text descriptions or photos
 2. Estimate portions and calculate nutritional info (calories, protein, carbs, fat)
 3. Return concise, friendly SMS-style responses with the logged meal and running daily totals
