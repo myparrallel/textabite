@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import path from 'path';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { db } from './db/client';
@@ -7,6 +8,7 @@ import stripeRouter from './routes/stripe';
 import legalRouter from './routes/legal';
 import webRouter from './routes/web';
 import dashboardRouter from './routes/dashboard';
+import demoRouter from './routes/demo';
 import { scheduleJobs } from './cron/dailySummary';
 
 const app = express();
@@ -23,8 +25,11 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.use(express.static(path.join(__dirname, '../public')));
+
 app.use('/webhook/sms', smsRouter);
 app.use('/webhook/stripe', stripeRouter);
+app.use('/api/demo', demoRouter);
 app.use('/', legalRouter);
 app.use('/', dashboardRouter);
 app.use('/', webRouter);

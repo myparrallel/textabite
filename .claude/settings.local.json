@@ -7,7 +7,18 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(brew install *)",
+      "Bash(find /Users/robartbyrobert -name \"food-journal-landing.html\" 2>/dev/null)",
+      "Bash(mkdir -p /Users/robartbyrobert/sms-food-journal/public && cp /Users/robartbyrobert/Downloads/food-journal-landing.html /Users/robartbyrobert/sms-food-journal/public/food-journal-landing.html)",
+      "Bash(node -e ' *)",
+      "Bash(node dist/index.js)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(curl -s -X POST http://localhost:3000/api/demo/signup -H 'Content-Type: application/json' -d '{\"email\":\"test@example.com\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/demo/chat -H 'Content-Type: application/json' -d '{\"messages\":[{\"role\":\"user\",\"content\":\"I ate an apple\"}],\"system\":\"You are a nutrition tracker. Reply with calories only.\",\"max_tokens\":50}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/demo/chat -H 'Content-Type: application/json' -d '{\"messages\":[{\"role\":\"user\",\"content\":\"I ate an apple\"}],\"system\":\"You are a nutrition tracker.\",\"max_tokens\":50}')",
+      "Bash(curl -s https://api.anthropic.com/v1/messages -H 'x-api-key: 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' -H 'anthropic-version: 2023-06-01' -H 'content-type: application/json' -d '{\"model\":\"claude-haiku-4-5-20251001\",\"max_tokens\":10,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}')",
+      "Bash(pkill -f \"node dist/index.js\")"
     ]
   }
 }

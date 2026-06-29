@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NourishLog — Food journaling by text</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0f0f;
+    --paper: #f7f5f0;
+    --mid: #6b6560;
+    --faint: #e8e4dd;
+    --green: #2d6a4f;
+    --green-light: #40916c;
+    --green-faint: #d8f3dc;
+    --red: #c1121f;
+    --sms-out: #2d6a4f;
+    --sms-in: #ffffff;
+    --radius: 18px;
+    --radius-sm: 10px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 18px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(247,245,240,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--faint);
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .logo span { color: var(--green); }
+  nav a {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--mid);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--ink); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 60px;
+    padding: 120px 80px 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .hero-text h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.8rem, 5vw, 4.2rem);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+  }
+  .hero-text h1 em {
+    font-style: italic;
+    color: var(--green);
+  }
+  .hero-text p {
+    font-size: 1.1rem;
+    color: var(--mid);
+    max-width: 420px;
+    margin-bottom: 40px;
+    line-height: 1.7;
+  }
+
+  .pill-tags {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 36px;
+  }
+  .pill {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 100px;
+    background: var(--faint);
+    color: var(--mid);
+    letter-spacing: 0.02em;
+  }
+  .pill.green { background: var(--green-faint); color: var(--green); }
+
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--ink);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 100px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    text-decoration: none;
+  }
+  .cta-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+  .cta-btn.ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 1.5px solid var(--faint);
+  }
+
+  /* PHONE MOCKUP */
+  .phone-wrap {
+    display: flex;
+    justify-content: center;
+    position: relative;
+  }
+  .phone {
+    width: 280px;
+    background: #1a1a1a;
+    border-radius: 40px;
+    padding: 16px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.05);
+    position: relative;
+  }
+  .phone-notch {
+    width: 80px; height: 28px;
+    background: #0f0f0f;
+    border-radius: 100px;
+    margin: 0 auto 16px;
+  }
+  .phone-screen {
+    background: #f0f0f0;
+    border-radius: 28px;
+    overflow: hidden;
+    min-height: 420px;
+  }
+  .phone-header {
+    background: #f7f7f7;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid #e5e5e5;
+    text-align: center;
+  }
+  .phone-contact {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .phone-contact-sub {
+    font-size: 0.65rem;
+    color: #888;
+    margin-top: 1px;
+  }
+  .phone-messages {
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .msg {
+    max-width: 80%;
+    padding: 9px 13px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+  .msg.out {
+    align-self: flex-end;
+    background: #007AFF;
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.in {
+    align-self: flex-start;
+    background: white;
+    color: #1a1a1a;
+    border-bottom-left-radius: 4px;
+  }
+  .msg-time {
+    font-size: 0.6rem;
+    color: #aaa;
+    text-align: center;
+    margin: 4px 0;
+  }
+
+  /* HOW IT WORKS */
+  .section {
+    padding: 100px 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 3.5vw, 2.8rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 60px;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+  }
+  .step {
+    padding: 32px;
+    border: 1px solid var(--faint);
+    border-radius: 16px;
+    background: white;
+  }
+  .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--mid);
+    margin-bottom: 20px;
+  }
+  .step h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+  }
+  .step p {
+    font-size: 0.9rem;
+    color: var(--mid);
+    line-height: 1.7;
+  }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: var(--faint);
+    margin: 0 80px;
+  }
+
+  /* EMAIL GATE MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(15,15,15,0.6);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .modal {
+    background: white;
+    border-radius: 24px;
+    padding: 48px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.2);
+    transform: translateY(16px);
+    transition: transform 0.25s;
+  }
+  .modal-overlay.active .modal {
+    transform: translateY(0);
+  }
+  .modal h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    letter-spacing: -0.02em;
+  }
+  .modal p {
+    color: var(--mid);
+    font-size: 0.9rem;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+  .modal input[type="email"] {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid var(--faint);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+  .modal input[type="email"]:focus {
+    border-color: var(--green);
+  }
+  .modal-submit {
+    width: 100%;
+    padding: 14px;
+    background: var(--ink);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .modal-submit:hover { background: #2a2a2a; }
+  .modal-fine {
+    font-size: 0.75rem;
+    color: #aaa;
+    text-align: center;
+    margin-top: 12px;
+  }
+  .modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    color: var(--mid);
+    cursor: pointer;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+  .modal-close:hover { background: var(--faint); }
+  .modal { position: relative; }
+
+  /* DEMO PANEL */
+  .demo-panel {
+    display: none;
+    width: 100%;
+    max-width: 560px;
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.2);
+    overflow: hidden;
+    flex-direction: column;
+    max-height: 90vh;
+  }
+  .demo-panel.active { display: flex; }
+
+  .demo-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--faint);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .demo-header-left h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+  }
+  .demo-header-left p {
+    font-size: 0.78rem;
+    color: var(--mid);
+    margin-top: 2px;
+  }
+  .demo-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    background: var(--green-faint);
+    color: var(--green);
+    border-radius: 100px;
+    letter-spacing: 0.05em;
+  }
+  .msg-limit {
+    font-size: 0.7rem;
+    color: var(--mid);
+    margin-top: 4px;
+  }
+
+  .demo-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 300px;
+    max-height: 400px;
+    background: #f7f5f2;
+  }
+
+  .demo-msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 78%;
+    gap: 4px;
+  }
+  .demo-msg.user { align-self: flex-end; }
+  .demo-msg.ai { align-self: flex-start; }
+
+  .demo-bubble {
+    padding: 11px 15px;
+    border-radius: 18px;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+  }
+  .demo-msg.user .demo-bubble {
+    background: var(--ink);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+  .demo-msg.ai .demo-bubble {
+    background: white;
+    color: var(--ink);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .demo-msg.ai .demo-bubble.thinking {
+    color: var(--mid);
+    font-style: italic;
+  }
+
+  .demo-img-preview {
+    max-width: 180px;
+    border-radius: 12px;
+    overflow: hidden;
+    align-self: flex-end;
+  }
+  .demo-img-preview img {
+    width: 100%;
+    display: block;
+  }
+
+  .demo-input-area {
+    padding: 16px 20px;
+    border-top: 1px solid var(--faint);
+    background: white;
+  }
+
+  .demo-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+  }
+
+  .demo-input-wrap {
+    flex: 1;
+    border: 1.5px solid var(--faint);
+    border-radius: 22px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.2s;
+    background: var(--paper);
+  }
+  .demo-input-wrap:focus-within { border-color: var(--green); }
+
+  .demo-img-thumb-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .demo-img-thumb {
+    position: relative;
+    width: 56px; height: 56px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .demo-img-thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .demo-img-thumb button {
+    position: absolute;
+    top: 2px; right: 2px;
+    width: 18px; height: 18px;
+    background: rgba(0,0,0,0.6);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+
+  .demo-input-bottom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .demo-text-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    outline: none;
+    resize: none;
+    min-height: 22px;
+    max-height: 80px;
+    line-height: 1.4;
+  }
+  .demo-text-input::placeholder { color: #bbb; }
+
+  .img-upload-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--mid);
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+  .img-upload-btn:hover { color: var(--green); }
+  #img-file-input { display: none; }
+
+  .demo-send-btn {
+    width: 42px; height: 42px;
+    background: var(--ink);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .demo-send-btn:hover { background: #333; }
+  .demo-send-btn:active { transform: scale(0.93); }
+  .demo-send-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  .demo-hints {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .hint-chip {
+    font-size: 0.73rem;
+    padding: 5px 10px;
+    background: var(--faint);
+    border-radius: 100px;
+    color: var(--mid);
+    cursor: pointer;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s;
+  }
+  .hint-chip:hover { background: #ddd9d2; color: var(--ink); }
+
+  .demo-limit-banner {
+    display: none;
+    padding: 14px 20px;
+    background: var(--ink);
+    color: white;
+    text-align: center;
+    font-size: 0.85rem;
+  }
+  .demo-limit-banner a {
+    color: #a8f0c0;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .demo-limit-banner.visible { display: block; }
+
+  /* FOOTER */
+  footer {
+    padding: 40px 80px;
+    border-top: 1px solid var(--faint);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--mid);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .hero {
+      grid-template-columns: 1fr;
+      padding: 100px 24px 60px;
+      gap: 40px;
+    }
+    .phone-wrap { display: none; }
+    .section { padding: 60px 24px; }
+    .steps { grid-template-columns: 1fr; gap: 20px; }
+    .divider { margin: 0 24px; }
+    footer { padding: 32px 24px; flex-direction: column; gap: 12px; }
+    .modal { padding: 32px 24px; }
+    .demo-panel { max-width: 100%; border-radius: 16px; }
+  }
+
+  /* TYPING INDICATOR */
+  .typing-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 4px 0;
+  }
+  .typing-dots span {
+    width: 6px; height: 6px;
+    background: var(--mid);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  .confidence-low {
+    font-size: 0.78rem;
+    color: #c1121f;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Nourish<span>Log</span></div>
+  <a href="#how-it-works">How it works</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-text">
+    <div class="pill-tags">
+      <span class="pill green">Now in beta</span>
+      <span class="pill">No app to download</span>
+      <span class="pill">Works with any phone</span>
+    </div>
+    <h1>Food journaling<br>that fits in a<br><em>text message</em></h1>
+    <p>Snap a photo or just describe what you ate. Get calories, protein, and macros back in seconds — all over SMS, no app required.</p>
+    <button class="cta-btn" onclick="openGate()">
+      Try it free
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="phone-header">
+          <div class="phone-contact">NourishLog</div>
+          <div class="phone-contact-sub">+1 (555) 012-3456</div>
+        </div>
+        <div class="phone-messages">
+          <div class="msg-time">Today 12:34 PM</div>
+          <div class="msg out">grilled salmon, roasted broccoli, brown rice</div>
+          <div class="msg in">🐟 Logged! Here's your meal:<br><br>Salmon — 35g protein, 320 cal<br>Broccoli — 4g protein, 55 cal<br>Brown rice (1 cup) — 5g protein, 215 cal<br><br>Total: <b>590 cal · 44g protein</b><br>Daily: 1,240 cal · 98g protein ✓</div>
+          <div class="msg-time">12:51 PM</div>
+          <div class="msg out">greek yogurt snack</div>
+          <div class="msg in">Added ✓ Chobani plain (170g)<br>+17g protein · +100 cal<br><br>Running: 1,340 cal · 115g protein</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how-it-works">
+  <div class="section-label">How it works</div>
+  <div class="section-title">Three texts a day.<br>That's the whole habit.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">TEXT</div>
+      <h3>Describe or snap</h3>
+      <p>Send a text description or a photo of your meal. No special format required — just talk like you normally would.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">AI</div>
+      <h3>Instant analysis</h3>
+      <p>Claude identifies every item, estimates portions, and calculates macros. Unclear photos trigger a single clarifying question.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">LOG</div>
+      <h3>Running totals</h3>
+      <p>Every response includes your daily running totals. Text "summary" anytime to see a full breakdown of your day.</p>
+    </div>
+  </div>
+</section>
+
+<!-- EMAIL GATE MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <!-- EMAIL GATE -->
+  <div class="modal" id="email-modal">
+    <button class="modal-close" onclick="closeGate()">✕</button>
+    <h2>Try it yourself</h2>
+    <p>Enter your email to unlock the demo — we'll also send you early access when we launch the real SMS version.</p>
+    <input type="email" id="email-input" placeholder="you@example.com" onkeydown="if(event.key==='Enter') submitEmail()" />
+    <button class="modal-submit" onclick="submitEmail()">Start the demo →</button>
+    <p class="modal-fine">No spam. Unsubscribe anytime. We use this to gauge interest.</p>
+  </div>
+
+  <!-- DEMO PANEL -->
+  <div class="demo-panel" id="demo-panel">
+    <div class="demo-header">
+      <div class="demo-header-left">
+        <h3>NourishLog Demo</h3>
+        <p>Type a meal or upload a food photo</p>
+      </div>
+      <div style="text-align:right">
+        <div class="demo-badge">LIVE DEMO</div>
+        <div class="msg-limit" id="msg-limit-display">5 messages remaining</div>
+      </div>
+    </div>
+
+    <div class="demo-messages" id="demo-messages">
+      <div class="demo-msg ai">
+        <div class="demo-bubble">Hey! 👋 I'm your NourishLog demo. Text me any meal — describe it or upload a photo — and I'll log the calories and macros. Try something like "oatmeal with banana and peanut butter" or snap a picture of your lunch.</div>
+      </div>
+    </div>
+
+    <div class="demo-limit-banner" id="limit-banner">
+      You've used your 5 demo messages. <a href="#" onclick="closeGate()">Sign up for full access →</a>
+    </div>
+
+    <div class="demo-input-area" id="demo-input-area">
+      <div class="demo-input-row">
+        <div class="demo-input-wrap" id="input-wrap">
+          <div class="demo-img-thumb-row" id="thumb-row" style="display:none"></div>
+          <div class="demo-input-bottom">
+            <label class="img-upload-btn" for="img-file-input" title="Upload food photo">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="7" cy="9" r="1.5" fill="currentColor"/><path d="M2 13l4-3 3 3 3-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </label>
+            <input type="file" id="img-file-input" accept="image/*" multiple onchange="handleImageUpload(event)" />
+            <textarea class="demo-text-input" id="demo-text" placeholder="Describe your meal…" rows="1" onkeydown="handleTextKeydown(event)" oninput="autoResize(this)"></textarea>
+          </div>
+        </div>
+        <button class="demo-send-btn" id="send-btn" onclick="sendMessage()">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="demo-hints">
+        <button class="hint-chip" onclick="useHint(this)">oatmeal with berries 🍓</button>
+        <button class="hint-chip" onclick="useHint(this)">chicken and rice bowl 🍚</button>
+        <button class="hint-chip" onclick="useHint(this)">greek yogurt snack 🥛</button>
+        <button class="hint-chip" onclick="useHint(this)">summary</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<footer>
+  <div class="logo" style="font-size:1rem">Nourish<span style="color:var(--green)">Log</span></div>
+  <span>Built with Claude · SMS-native · No app required</span>
+</footer>
+
+<script>
+  // ── STATE ──────────────────────────────────────────────────────────────────
+  const MAX_MESSAGES = 5;
+  let messageCount = 0;
+  let pendingImages = []; // { file, dataUrl, base64, mediaType }
+  let conversationHistory = [];
+  let dailyLog = { calories: 0, protein: 0, carbs: 0, fat: 0, entries: [] };
+
+  const SYSTEM_PROMPT = `You are NourishLog, an SMS-based food journal assistant. Your job is to:
+1. Identify food items from text descriptions or photos
+2. Estimate portions and calculate nutritional info (calories, protein, carbs, fat)
+3. Return concise, friendly SMS-style responses with the logged meal and running daily totals
+
+RUNNING TOTALS (update these with each message):
+Daily Log: ${JSON.stringify(dailyLog)}
+
+CONFIDENCE RULES:
+- If you can clearly identify food items → log them and return nutrition info
+- If an image is too blurry, ambiguous, or unclear → set confidence: "low" and ask ONE specific clarifying question (e.g. "Is that salmon or tuna?")
+- If text is ambiguous but reasonable → make a sensible assumption and note it (e.g. "Assuming a standard 6oz chicken breast")
+
+SIZE ESTIMATION TIPS:
+- Use reference objects in photos (plates, utensils, hands) to estimate portions
+- For cut fruit or similar, a "cup" is standard if no reference is visible
+- Always state your portion assumption so users can correct you
+
+RESPONSE FORMAT (keep it SMS-friendly, under 160 chars per logical section):
+- Emoji for the food type
+- Each item on its own line with protein and calories
+- Bold totals line: "Total: X cal · Yg protein"
+- Running daily: "Today: X cal · Yg protein"
+- If confidence is low, end with: [CLARIFY: your single question]
+
+For "summary" requests, return a clean daily breakdown table.
+
+Be warm, encouraging, and concise. This is SMS — no markdown headers, no bullet lists, just clean line breaks.`;
+
+  // ── GATE ──────────────────────────────────────────────────────────────────
+  function openGate() {
+    document.getElementById('modal-overlay').classList.add('active');
+    setTimeout(() => document.getElementById('email-input')?.focus(), 300);
+  }
+
+  function closeGate() {
+    document.getElementById('modal-overlay').classList.remove('active');
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeGate();
+  }
+
+  async function submitEmail() {
+    const email = document.getElementById('email-input').value.trim();
+    if (!email || !email.includes('@')) {
+      document.getElementById('email-input').style.borderColor = 'var(--red)';
+      document.getElementById('email-input').focus();
+      return;
+    }
+    try {
+      await fetch('/api/demo/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+    } catch (e) {
+      console.error('Email save failed:', e);
+    }
+    // Switch to demo panel regardless
+    document.getElementById('email-modal').style.display = 'none';
+    document.getElementById('demo-panel').classList.add('active');
+  }
+
+  // ── IMAGE HANDLING ─────────────────────────────────────────────────────────
+  function handleImageUpload(event) {
+    const files = Array.from(event.target.files);
+    files.slice(0, 3 - pendingImages.length).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        const base64 = dataUrl.split(',')[1];
+        const mediaType = file.type;
+        const id = Date.now() + Math.random();
+        pendingImages.push({ file, dataUrl, base64, mediaType, id });
+        renderImageThumbs();
+      };
+      reader.readAsDataURL(file);
+    });
+    event.target.value = '';
+  }
+
+  function renderImageThumbs() {
+    const row = document.getElementById('thumb-row');
+    row.style.display = pendingImages.length ? 'flex' : 'none';
+    row.innerHTML = pendingImages.map(img => `
+      <div class="demo-img-thumb">
+        <img src="${img.dataUrl}" alt="food photo" />
+        <button onclick="removeImage(${img.id})">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function removeImage(id) {
+    pendingImages = pendingImages.filter(img => img.id !== id);
+    renderImageThumbs();
+  }
+
+  // ── MESSAGING ─────────────────────────────────────────────────────────────
+  function handleTextKeydown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+  }
+
+  function useHint(btn) {
+    document.getElementById('demo-text').value = btn.textContent.replace(/[^\x00-\x7F]/g, '').trim();
+    document.getElementById('demo-text').focus();
+  }
+
+  async function sendMessage() {
+    if (messageCount >= MAX_MESSAGES) return;
+
+    const textEl = document.getElementById('demo-text');
+    const text = textEl.value.trim();
+    const images = [...pendingImages];
+
+    if (!text && images.length === 0) return;
+
+    // Disable input
+    const sendBtn = document.getElementById('send-btn');
+    sendBtn.disabled = true;
+
+    // Show user message
+    if (images.length > 0) {
+      images.forEach(img => {
+        appendImageBubble(img.dataUrl);
+      });
+    }
+    if (text) {
+      appendMessage('user', text);
+    }
+
+    // Clear input
+    textEl.value = '';
+    textEl.style.height = 'auto';
+    pendingImages = [];
+    renderImageThumbs();
+
+    // Show typing
+    const typingId = showTyping();
+
+    // Build message content for API
+    const userContent = [];
+    images.forEach(img => {
+      userContent.push({
+        type: 'image',
+        source: { type: 'base64', media_type: img.mediaType, data: img.base64 }
+      });
+    });
+    if (text) {
+      userContent.push({ type: 'text', text });
+    }
+
+    // Add to conversation history
+    conversationHistory.push({ role: 'user', content: userContent });
+
+    try {
+      const updatedSystem = SYSTEM_PROMPT.replace(
+        /Daily Log: .*/,
+        `Daily Log: ${JSON.stringify(dailyLog)}`
+      );
+
+      const response = await fetch('/api/demo/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1000,
+          system: updatedSystem,
+          messages: conversationHistory
+        })
+      });
+
+      const data = await response.json();
+      removeTyping(typingId);
+
+      const aiText = data.content?.find(b => b.type === 'text')?.text || 'Something went wrong. Try again.';
+
+      // Check for low confidence
+      const isLowConfidence = aiText.includes('[CLARIFY:');
+      const cleanText = aiText.replace('[CLARIFY:', '').replace(']', '');
+
+      appendMessage('ai', cleanText, isLowConfidence);
+      conversationHistory.push({ role: 'assistant', content: aiText });
+
+      // Update message count
+      messageCount++;
+      const remaining = MAX_MESSAGES - messageCount;
+      document.getElementById('msg-limit-display').textContent =
+        remaining > 0 ? `${remaining} message${remaining !== 1 ? 's' : ''} remaining` : 'Demo limit reached';
+
+      if (messageCount >= MAX_MESSAGES) {
+        document.getElementById('limit-banner').classList.add('visible');
+        document.getElementById('demo-input-area').style.opacity = '0.4';
+        document.getElementById('demo-input-area').style.pointerEvents = 'none';
+      }
+
+    } catch (err) {
+      removeTyping(typingId);
+      appendMessage('ai', 'Connection error — please try again.');
+      console.error(err);
+    }
+
+    sendBtn.disabled = false;
+  }
+
+  function appendMessage(role, text, lowConfidence = false) {
+    const container = document.getElementById('demo-messages');
+    const div = document.createElement('div');
+    div.className = `demo-msg ${role}`;
+    div.innerHTML = `<div class="demo-bubble${lowConfidence ? ' thinking' : ''}">${escapeHtml(text)}</div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function appendImageBubble(dataUrl) {
+    const container = document.getElementById('demo-messages');
+    const div = document.createElement('div');
+    div.className = 'demo-img-preview';
+    div.innerHTML = `<img src="${dataUrl}" alt="your food photo" style="border-radius:12px;max-width:180px;" />`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function showTyping() {
+    const container = document.getElementById('demo-messages');
+    const id = 'typing-' + Date.now();
+    const div = document.createElement('div');
+    div.className = 'demo-msg ai';
+    div.id = id;
+    div.innerHTML = `<div class="demo-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return id;
+  }
+
+  function removeTyping(id) {
+    document.getElementById(id)?.remove();
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>');
+  }
+</script>
+</body>
+</html>

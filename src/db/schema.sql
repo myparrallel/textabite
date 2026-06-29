@@ -74,6 +74,13 @@ CREATE TABLE IF NOT EXISTS meals (
   logged_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS demo_signups (
+  id         SERIAL PRIMARY KEY,
+  email      TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  converted  BOOLEAN DEFAULT FALSE
+);
+
 CREATE TABLE IF NOT EXISTS water_logs (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
