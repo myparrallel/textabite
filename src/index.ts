@@ -25,11 +25,12 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.use(express.static(path.join(__dirname, '../public')));
-
 app.use('/webhook/sms', smsRouter);
 app.use('/webhook/stripe', stripeRouter);
 app.use('/api/demo', demoRouter);
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../public/food-journal-landing.html'));
+});
 app.use('/', legalRouter);
 app.use('/', dashboardRouter);
 app.use('/', webRouter);

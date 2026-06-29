@@ -1,3 +1,4 @@
+import path from 'path';
 import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import Anthropic from '@anthropic-ai/sdk';
@@ -8,7 +9,7 @@ const client = new Anthropic();
 
 const chatLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 5,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests. Try again in an hour.' },
