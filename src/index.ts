@@ -28,7 +28,7 @@ app.get('/health', (_req, res) => {
 app.use('/webhook/sms', smsRouter);
 app.use('/webhook/stripe', stripeRouter);
 app.use('/api/demo', demoRouter);
-app.get('/', (_req, res) => {
+app.get('/demo', (_req, res) => {
   res.sendFile(path.join(__dirname, '../public/food-journal-landing.html'));
 });
 app.use('/', legalRouter);

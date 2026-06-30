@@ -18,7 +18,12 @@
       "Bash(curl -s -X POST http://localhost:3000/api/demo/chat -H 'Content-Type: application/json' -d '{\"messages\":[{\"role\":\"user\",\"content\":\"I ate an apple\"}],\"system\":\"You are a nutrition tracker. Reply with calories only.\",\"max_tokens\":50}')",
       "Bash(curl -s -X POST http://localhost:3000/api/demo/chat -H 'Content-Type: application/json' -d '{\"messages\":[{\"role\":\"user\",\"content\":\"I ate an apple\"}],\"system\":\"You are a nutrition tracker.\",\"max_tokens\":50}')",
       "Bash(curl -s https://api.anthropic.com/v1/messages -H 'x-api-key: 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' -H 'anthropic-version: 2023-06-01' -H 'content-type: application/json' -d '{\"model\":\"claude-haiku-4-5-20251001\",\"max_tokens\":10,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}')",
-      "Bash(pkill -f \"node dist/index.js\")"
+      "Bash(pkill -f \"node dist/index.js\")",
+      "Bash(curl -s -X POST https://textabite-production.up.railway.app/api/demo/chat -H 'Content-Type: application/json' -d '{\"messages\":[{\"role\":\"user\",\"content\":\"I had oatmeal\"}],\"system\":\"You are a nutrition tracker.\",\"max_tokens\":100}')",
+      "Bash(gh pr *)",
+      "Bash(/opt/homebrew/bin/gh pr *)",
+      "Bash(curl -s -X POST https://textabite-production.up.railway.app/api/demo/chat -H 'Content-Type: application/json' -d '{\"messages\":[{\"role\":\"user\",\"content\":\"I had a cup of overnight oats and bowl of mixed cut fruit\"}],\"system\":\"You are Textabite, an SMS-based food journal assistant. Log meals and return nutrition info in a casual friendly way.\",\"max_tokens\":200}')",
+      "Bash(python3 -m json.tool)"
     ]
   }
 }
