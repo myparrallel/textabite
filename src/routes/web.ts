@@ -29,6 +29,7 @@ router.post('/checkout', async (req: Request, res: Response): Promise<void> => {
       line_items: [{ price: priceId, quantity: 1 }],
       phone_number_collection: { enabled: true },
       metadata: { phone, plan },
+      subscription_data: { trial_period_days: 14 },
       success_url: `${APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${APP_URL}/cancel`,
     });
@@ -83,10 +84,36 @@ function landingPage(): string {
     .hero h1 span { color: #16a34a; }
     .hero p { font-size: 1.2rem; color: #4b5563; max-width: 540px; margin: 0 auto 40px; line-height: 1.7; }
     .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-    .btn-hero-primary { padding: 15px 32px; background: #16a34a; color: #fff; border-radius: 10px; font-size: 1rem; font-weight: 700; text-decoration: none; }
+    .btn-hero-primary { padding: 15px 32px; background: #16a34a; color: #fff; border-radius: 10px; font-size: 1rem; font-weight: 700; text-decoration: none; border: none; cursor: pointer; }
     .btn-hero-primary:hover { background: #15803d; }
-    .btn-hero-secondary { padding: 15px 28px; background: #fff; color: #374151; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 1rem; font-weight: 600; text-decoration: none; }
+    .btn-hero-secondary { padding: 15px 28px; background: #fff; color: #374151; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 1rem; font-weight: 600; text-decoration: none; cursor: pointer; }
     .btn-hero-secondary:hover { border-color: #9ca3af; }
+    /* DEMO MODAL */
+    .demo-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
+    .demo-modal-overlay.open { display: flex; }
+    .demo-modal { background: #fff; border-radius: 20px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,0.2); }
+    .demo-modal-header { padding: 24px 24px 0; display: flex; justify-content: space-between; align-items: center; }
+    .demo-modal-header h3 { font-size: 1.1rem; font-weight: 700; }
+    .demo-modal-close { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #9ca3af; line-height: 1; }
+    .demo-email-screen { padding: 24px; }
+    .demo-email-screen p { color: #6b7280; font-size: 0.9rem; margin-bottom: 16px; line-height: 1.5; }
+    .demo-email-screen input { width: 100%; padding: 12px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 1rem; outline: none; margin-bottom: 10px; }
+    .demo-email-screen input:focus { border-color: #16a34a; }
+    .demo-email-screen button { width: 100%; padding: 13px; background: #16a34a; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+    .demo-chat-screen { display: none; flex-direction: column; height: 480px; }
+    .demo-chat-screen.active { display: flex; }
+    .demo-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: #f9fafb; }
+    .demo-msg { max-width: 80%; padding: 10px 14px; border-radius: 14px; font-size: 0.88rem; line-height: 1.5; }
+    .demo-msg.ai { background: #fff; border: 1px solid #f0f0f0; align-self: flex-start; }
+    .demo-msg.user { background: #16a34a; color: #fff; align-self: flex-end; }
+    .demo-input-row { padding: 12px 16px; border-top: 1px solid #f0f0f0; display: flex; gap: 8px; }
+    .demo-input-row input { flex: 1; padding: 10px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; outline: none; }
+    .demo-input-row input:focus { border-color: #16a34a; }
+    .demo-input-row button { padding: 10px 16px; background: #16a34a; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
+    .demo-signup-banner { margin: 12px 16px; padding: 14px 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; text-align: center; }
+    .demo-signup-banner p { font-size: 0.85rem; color: #15803d; font-weight: 600; margin-bottom: 10px; }
+    .demo-signup-banner a { display: block; padding: 11px; background: #16a34a; color: #fff; border-radius: 8px; font-weight: 700; font-size: 0.9rem; text-decoration: none; }
+    .demo-count { padding: 6px 16px; font-size: 0.75rem; color: #9ca3af; text-align: right; background: #f9fafb; }
     .hero-sub { margin-top: 14px; font-size: 0.85rem; color: #9ca3af; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
     .hero-sub span::before { content: "✓ "; color: #16a34a; }
 
@@ -216,8 +243,8 @@ function landingPage(): string {
   <h1>Your AI nutritionist<br><span>lives in your texts</span></h1>
   <p>Text any meal — or snap a photo — and get instant calorie and macro info. Plus a daily summary every morning. It's that simple.</p>
   <div class="hero-btns">
-    <a href="/demo" class="btn-hero-primary">Try it free →</a>
-    <a href="#pricing" class="btn-hero-secondary">See plans</a>
+    <button onclick="openDemo()" class="btn-hero-primary">Try demo free →</button>
+    <a href="#pricing" class="btn-hero-secondary">Start free trial</a>
   </div>
   <div class="hero-sub">
     <span>Cancel anytime</span>
@@ -487,6 +514,125 @@ function landingPage(): string {
   </div>
   <span style="font-size:0.82rem;">© ${new Date().getFullYear()} Textabite. All rights reserved.</span>
 </footer>
+
+<!-- DEMO MODAL -->
+<div class="demo-modal-overlay" id="demoOverlay">
+  <div class="demo-modal">
+    <div class="demo-modal-header">
+      <h3>Try Textabite free</h3>
+      <button class="demo-modal-close" onclick="closeDemo()">&#x2715;</button>
+    </div>
+    <div class="demo-email-screen" id="demoEmailScreen">
+      <p>Enter your email to unlock the live demo. No card required.</p>
+      <input type="email" id="demoEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter') startDemo()">
+      <button onclick="startDemo()">Start demo &#x2192;</button>
+    </div>
+    <div class="demo-chat-screen" id="demoChatScreen">
+      <div class="demo-count" id="demoCount">5 messages remaining</div>
+      <div class="demo-messages" id="demoMessages">
+        <div class="demo-msg ai">Hey! I'm Textabite. Tell me what you ate and I'll give you the calories and macros instantly.</div>
+      </div>
+      <div class="demo-input-row" id="demoInputRow">
+        <input type="text" id="demoChatInput" placeholder="e.g. 2 eggs and toast..." onkeydown="if(event.key==='Enter') sendDemoMsg()">
+        <button onclick="sendDemoMsg()">Send</button>
+      </div>
+      <div class="demo-signup-banner" id="demoSignupBanner" style="display:none;">
+        <p>Like what you see? Start your 14-day free trial.</p>
+        <a href="#pricing" onclick="closeDemo()">Start my free trial &#x2192;</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let demoCount = 0;
+const DEMO_MAX = 5;
+let demoHistory = [];
+
+function openDemo() {
+  document.getElementById('demoOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('demoEmail').focus(), 100);
+}
+function closeDemo() {
+  document.getElementById('demoOverlay').classList.remove('open');
+}
+document.getElementById('demoOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeDemo();
+});
+
+async function startDemo() {
+  const email = document.getElementById('demoEmail').value.trim();
+  if (!email || !email.includes('@')) {
+    document.getElementById('demoEmail').style.borderColor = '#ef4444';
+    return;
+  }
+  try {
+    await fetch('/api/demo/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+  } catch(e) {}
+  document.getElementById('demoEmailScreen').style.display = 'none';
+  document.getElementById('demoChatScreen').classList.add('active');
+  setTimeout(() => document.getElementById('demoChatInput').focus(), 100);
+}
+
+function appendDemoMsg(role, text) {
+  const el = document.createElement('div');
+  el.className = 'demo-msg ' + role;
+  el.textContent = text;
+  const msgs = document.getElementById('demoMessages');
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function sendDemoMsg() {
+  if (demoCount >= DEMO_MAX) return;
+  const input = document.getElementById('demoChatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  appendDemoMsg('user', text);
+  demoHistory.push({ role: 'user', content: text });
+
+  const typing = document.createElement('div');
+  typing.className = 'demo-msg ai';
+  typing.id = 'demoTyping';
+  typing.textContent = '...';
+  document.getElementById('demoMessages').appendChild(typing);
+  document.getElementById('demoMessages').scrollTop = 9999;
+
+  try {
+    const res = await fetch('/api/demo/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 200,
+        system: 'You are Textabite, a friendly SMS food journal assistant. When the user describes food, give calories and key macros in a casual friendly way. Keep replies under 160 chars. Plain text only, no markdown.',
+        messages: demoHistory
+      })
+    });
+    const data = await res.json();
+    document.getElementById('demoTyping')?.remove();
+    const reply = data.content?.find(b => b.type === 'text')?.text || 'Something went wrong, try again!';
+    appendDemoMsg('ai', reply);
+    demoHistory.push({ role: 'assistant', content: reply });
+  } catch(e) {
+    document.getElementById('demoTyping')?.remove();
+    appendDemoMsg('ai', 'Connection error — please try again.');
+  }
+
+  demoCount++;
+  const remaining = DEMO_MAX - demoCount;
+  document.getElementById('demoCount').textContent = remaining > 0 ? remaining + ' messages remaining' : 'Demo limit reached';
+  if (demoCount >= DEMO_MAX) {
+    document.getElementById('demoInputRow').style.display = 'none';
+    document.getElementById('demoSignupBanner').style.display = 'block';
+  }
+}
+</script>
 
 </body>
 </html>`;
