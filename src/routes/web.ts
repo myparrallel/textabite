@@ -502,7 +502,11 @@ function landingPage(): string {
       <input type="text" id="waitlistName" placeholder="Your name" style="margin-bottom:10px;width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:1rem;outline:none;">
       <input type="email" id="waitlistEmail" placeholder="your@email.com" style="margin-bottom:10px;width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:1rem;outline:none;">
       <input type="tel" id="waitlistPhone" placeholder="Phone number (optional)" style="margin-bottom:10px;width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:1rem;outline:none;">
-      <button onclick="submitWaitlist()" style="width:100%;padding:13px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Reserve my spot &#x2192;</button>
+      <label id="waitlistConsentLabel" style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;cursor:pointer;">
+        <input type="checkbox" id="waitlistConsent" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:var(--accent2);">
+        <span style="font-size:0.78rem;color:var(--muted);line-height:1.4;">By checking this box, I agree to receive recurring SMS messages from Textabite including launch notifications, meal logging confirmations, and nutrition summaries. Message frequency varies. Message and data rates may apply. Reply STOP to cancel. <a href="/terms" style="color:var(--accent2);">Terms</a> &amp; <a href="/privacy" style="color:var(--accent2);">Privacy Policy</a>.</span>
+      </label>
+      <button onclick="submitWaitlist()" style="width:100%;padding:13px;background:var(--accent2);color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Reserve my spot &#x2192;</button>
     </div>
     <div class="demo-email-screen" id="waitlistSuccess" style="display:none;">
       <p style="font-size:1.1rem;font-weight:700;color:#111;margin-bottom:8px;">You're on the list!</p>
@@ -556,9 +560,11 @@ async function submitWaitlist() {
   const name = document.getElementById('waitlistName').value.trim();
   const email = document.getElementById('waitlistEmail').value.trim();
   const phone = document.getElementById('waitlistPhone').value.trim();
-  if (!name || !email || !email.includes('@')) {
+  const consent = document.getElementById('waitlistConsent').checked;
+  if (!name || !email || !email.includes('@') || !consent) {
     if (!name) document.getElementById('waitlistName').style.borderColor = '#ef4444';
     if (!email || !email.includes('@')) document.getElementById('waitlistEmail').style.borderColor = '#ef4444';
+    if (!consent) document.getElementById('waitlistConsentLabel').style.color = '#ef4444';
     return;
   }
   try {
