@@ -204,7 +204,7 @@ function landingPage(): string {
   <div class="nav-links">
     <a href="#how" class="hide-mobile">How it works</a>
     <a href="#pricing" class="hide-mobile">Pricing</a>
-    <a href="/login" class="login">Log in</a>
+    <a href="/login" class="hide-mobile login">Log in</a>
     <a href="#faq" class="hide-mobile">FAQ</a>
     <a href="#pricing" class="cta">Start for $7.99/mo</a>
   </div>
@@ -216,8 +216,8 @@ function landingPage(): string {
   <h1>Your AI nutritionist<br><span>lives in your texts</span></h1>
   <p>Text any meal — or snap a photo — and get instant calorie and macro info. Plus a daily summary every morning. It's that simple.</p>
   <div class="hero-btns">
-    <a href="#pricing" class="btn-hero-primary">See plans →</a>
-    <a href="/login" class="btn-hero-secondary">Log in</a>
+    <a href="/demo" class="btn-hero-primary">Try it free →</a>
+    <a href="#pricing" class="btn-hero-secondary">See plans</a>
   </div>
   <div class="hero-sub">
     <span>Cancel anytime</span>
