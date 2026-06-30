@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import Anthropic from '@anthropic-ai/sdk';
 import { db } from '../db/client';
+import { sendWaitlistConfirmation } from '../services/email';
 
 const router = Router();
 const client = new Anthropic();
@@ -61,10 +62,18 @@ router.post('/waitlist', async (req: Request, res: Response): Promise<void> => {
     return;
   }
   try {
-    await db.query(
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanName = name.trim();
+    const { rowCount } = await db.query(
       `INSERT INTO waitlist (name, email, phone) VALUES ($1, $2, $3) ON CONFLICT (email) DO NOTHING`,
-      [name.trim(), email.toLowerCase().trim(), phone?.trim() || null]
+      [cleanName, cleanEmail, phone?.trim() || null]
     );
+    // Only send confirmation for new signups, not duplicates
+    if (rowCount && rowCount > 0) {
+      sendWaitlistConfirmation(cleanName, cleanEmail).catch(err =>
+        console.error('Waitlist confirmation email error:', err)
+      );
+    }
     res.json({ success: true });
   } catch (err) {
     console.error('Waitlist error:', err);
