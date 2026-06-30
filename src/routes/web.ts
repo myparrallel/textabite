@@ -83,6 +83,7 @@ function landingPage(): string {
       .comp-row .feature { font-size: 0.82rem; }
       .comp-row .val { font-size: 0.9rem; }
       .comp-row.header { font-size: 0.8rem; }
+      .comp-row.header .val { font-size: 0.7rem; word-break: break-word; }
     }
 
     /* HERO */
