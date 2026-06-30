@@ -52,7 +52,7 @@ function landingPage(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Textabite – Track meals by text</title>
+  <title>Textabite – Set your goals. We'll keep you honest.</title>
   <style>
     :root {
       --bg: #FFFDE7; --bg2: #FFFFFF; --ink: #2E2A14;
@@ -234,21 +234,21 @@ function landingPage(): string {
     <a href="#pricing" class="hide-mobile">Pricing</a>
     <a href="/login" class="hide-mobile login">Log in</a>
     <a href="#faq" class="hide-mobile">FAQ</a>
-    <a href="#pricing" class="cta">Join waitlist</a>
+    <a href="#pricing" class="cta">Start free trial</a>
   </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="badge">✨ No app download required</div>
-  <h1>Your AI nutritionist<br><span>lives in your texts</span></h1>
-  <p>Text any meal — or snap a photo — and get instant calorie and macro info. Plus a daily summary every morning. It's that simple.</p>
+  <div class="badge">🎯 Your accountability partner</div>
+  <h1>Set your goals.<br><span>We'll keep you honest.</span></h1>
+  <p>Text what you eat. Get instant nutrition breakdowns and a daily morning summary that tells you the truth — no fluff, no guilt, just clarity.</p>
   <div class="hero-btns">
     <button onclick="openDemo()" class="btn-hero-primary">Try demo free →</button>
-    <a href="#pricing" class="btn-hero-secondary">Join waitlist</a>
+    <a href="#pricing" class="btn-hero-secondary">See how it works</a>
   </div>
   <div class="hero-sub">
-    <span>Cancel anytime</span>
+    <span>14-day free trial</span>
     <span>No app to download</span>
     <span>Works on any phone</span>
   </div>
