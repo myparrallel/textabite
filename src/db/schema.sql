@@ -74,6 +74,14 @@ CREATE TABLE IF NOT EXISTS meals (
   logged_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS waitlist (
+  id         SERIAL PRIMARY KEY,
+  name       TEXT NOT NULL,
+  email      TEXT UNIQUE NOT NULL,
+  phone      TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS demo_signups (
   id         SERIAL PRIMARY KEY,
   email      TEXT UNIQUE NOT NULL,

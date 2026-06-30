@@ -54,4 +54,22 @@ router.post('/chat', chatLimiter, async (req: Request, res: Response): Promise<v
   }
 });
 
+router.post('/waitlist', async (req: Request, res: Response): Promise<void> => {
+  const { name, email, phone } = req.body as { name?: string; email?: string; phone?: string };
+  if (!name || !email || !email.includes('@')) {
+    res.status(400).json({ error: 'Name and valid email required' });
+    return;
+  }
+  try {
+    await db.query(
+      `INSERT INTO waitlist (name, email, phone) VALUES ($1, $2, $3) ON CONFLICT (email) DO NOTHING`,
+      [name.trim(), email.toLowerCase().trim(), phone?.trim() || null]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Waitlist error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;

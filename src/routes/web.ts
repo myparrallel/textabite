@@ -233,7 +233,7 @@ function landingPage(): string {
     <a href="#pricing" class="hide-mobile">Pricing</a>
     <a href="/login" class="hide-mobile login">Log in</a>
     <a href="#faq" class="hide-mobile">FAQ</a>
-    <a href="#pricing" class="cta">Start for $7.99/mo</a>
+    <a href="#pricing" class="cta">Join waitlist</a>
   </div>
 </nav>
 
@@ -244,7 +244,7 @@ function landingPage(): string {
   <p>Text any meal — or snap a photo — and get instant calorie and macro info. Plus a daily summary every morning. It's that simple.</p>
   <div class="hero-btns">
     <button onclick="openDemo()" class="btn-hero-primary">Try demo free →</button>
-    <a href="#pricing" class="btn-hero-secondary">Start free trial</a>
+    <a href="#pricing" class="btn-hero-secondary">Join waitlist</a>
   </div>
   <div class="hero-sub">
     <span>Cancel anytime</span>
@@ -470,12 +470,8 @@ function landingPage(): string {
         <li class="no"><span>✗</span> "Should I eat this?" advisor</li>
         <li class="no"><span>✗</span> Meal reminders</li>
       </ul>
-      <form class="price-form" action="/checkout" method="POST">
-        <input type="hidden" name="plan" value="basic">
-        <input type="tel" name="phone" placeholder="Your phone number" required>
-        <button type="submit" class="btn-basic">Start Basic →</button>
-      </form>
-      <p class="price-guarantee">🔒 Secured by Stripe · Cancel anytime</p>
+      <button onclick="openWaitlist('basic')" class="btn-basic">Join waitlist →</button>
+      <p class="price-guarantee">🔒 Launching soon · Be first in line</p>
     </div>
 
     <!-- PREMIUM -->
@@ -494,12 +490,8 @@ function landingPage(): string {
         <li><span class="check">✓</span> Friendly check-in texts</li>
         <li><span class="check">✓</span> Dashboard with meal history</li>
       </ul>
-      <form class="price-form" action="/checkout" method="POST">
-        <input type="hidden" name="plan" value="premium">
-        <input type="tel" name="phone" placeholder="Your phone number" required>
-        <button type="submit" class="btn-premium">Start Premium →</button>
-      </form>
-      <p class="price-guarantee">🔒 Secured by Stripe · Cancel anytime</p>
+      <button onclick="openWaitlist('premium')" class="btn-premium">Join waitlist →</button>
+      <p class="price-guarantee">🔒 Launching soon · Be first in line</p>
     </div>
 
   </div>
@@ -514,6 +506,28 @@ function landingPage(): string {
   </div>
   <span style="font-size:0.82rem;">© ${new Date().getFullYear()} Textabite. All rights reserved.</span>
 </footer>
+
+<!-- WAITLIST MODAL -->
+<div class="demo-modal-overlay" id="waitlistOverlay">
+  <div class="demo-modal">
+    <div class="demo-modal-header">
+      <h3>Join the waitlist</h3>
+      <button class="demo-modal-close" onclick="closeWaitlist()">&#x2715;</button>
+    </div>
+    <div class="demo-email-screen" id="waitlistForm">
+      <p>We're launching soon. Be first in line and get notified the moment we go live.</p>
+      <input type="hidden" id="waitlistPlan">
+      <input type="text" id="waitlistName" placeholder="Your name" style="margin-bottom:10px;width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:1rem;outline:none;">
+      <input type="email" id="waitlistEmail" placeholder="your@email.com" style="margin-bottom:10px;width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:1rem;outline:none;">
+      <input type="tel" id="waitlistPhone" placeholder="Phone number (optional)" style="margin-bottom:10px;width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:1rem;outline:none;">
+      <button onclick="submitWaitlist()" style="width:100%;padding:13px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Reserve my spot &#x2192;</button>
+    </div>
+    <div class="demo-email-screen" id="waitlistSuccess" style="display:none;">
+      <p style="font-size:1.1rem;font-weight:700;color:#111;margin-bottom:8px;">You're on the list!</p>
+      <p>We'll text and email you the moment Textabite launches. Thanks for being an early supporter.</p>
+    </div>
+  </div>
+</div>
 
 <!-- DEMO MODAL -->
 <div class="demo-modal-overlay" id="demoOverlay">
@@ -545,6 +559,37 @@ function landingPage(): string {
 </div>
 
 <script>
+function openWaitlist(plan) {
+  document.getElementById('waitlistPlan').value = plan;
+  document.getElementById('waitlistOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('waitlistName').focus(), 100);
+}
+function closeWaitlist() {
+  document.getElementById('waitlistOverlay').classList.remove('open');
+}
+document.getElementById('waitlistOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeWaitlist();
+});
+async function submitWaitlist() {
+  const name = document.getElementById('waitlistName').value.trim();
+  const email = document.getElementById('waitlistEmail').value.trim();
+  const phone = document.getElementById('waitlistPhone').value.trim();
+  if (!name || !email || !email.includes('@')) {
+    if (!name) document.getElementById('waitlistName').style.borderColor = '#ef4444';
+    if (!email || !email.includes('@')) document.getElementById('waitlistEmail').style.borderColor = '#ef4444';
+    return;
+  }
+  try {
+    await fetch('/api/demo/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, phone })
+    });
+  } catch(e) {}
+  document.getElementById('waitlistForm').style.display = 'none';
+  document.getElementById('waitlistSuccess').style.display = 'block';
+}
+
 let demoCount = 0;
 const DEMO_MAX = 5;
 let demoHistory = [];

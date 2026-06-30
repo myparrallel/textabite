@@ -23,7 +23,8 @@
       "Bash(gh pr *)",
       "Bash(/opt/homebrew/bin/gh pr *)",
       "Bash(curl -s -X POST https://textabite-production.up.railway.app/api/demo/chat -H 'Content-Type: application/json' -d '{\"messages\":[{\"role\":\"user\",\"content\":\"I had a cup of overnight oats and bowl of mixed cut fruit\"}],\"system\":\"You are Textabite, an SMS-based food journal assistant. Log meals and return nutrition info in a casual friendly way.\",\"max_tokens\":200}')",
-      "Bash(python3 -m json.tool)"
+      "Bash(python3 -m json.tool)",
+      "Bash(grep -n \"Start for \\\\$7.99\\\\|btn-hero-secondary\\\\|See plans\\\\|Start free trial\\\\|pricing-card\\\\|checkout\" /Users/robartbyrobert/sms-food-journal/src/routes/web.ts)"
     ]
   }
 }
