@@ -79,11 +79,7 @@ function landingPage(): string {
     @media (max-width: 640px) {
       nav { padding: 16px 20px; }
       nav .nav-links .hide-mobile { display: none; }
-      .comp-row { grid-template-columns: 1.6fr 1fr 1fr; padding: 12px; gap: 4px; }
-      .comp-row .feature { font-size: 0.82rem; }
-      .comp-row .val { font-size: 0.9rem; }
-      .comp-row.header { font-size: 0.8rem; }
-      .comp-row.header .val { font-size: 0.7rem; word-break: break-word; }
+      .comp-row .feature { font-size: 0.8rem; }
     }
 
     /* HERO */
