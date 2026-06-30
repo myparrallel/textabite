@@ -79,6 +79,10 @@ function landingPage(): string {
     @media (max-width: 640px) {
       nav { padding: 16px 20px; }
       nav .nav-links .hide-mobile { display: none; }
+      .comp-row { grid-template-columns: 1.6fr 1fr 1fr; padding: 12px; gap: 4px; }
+      .comp-row .feature { font-size: 0.82rem; }
+      .comp-row .val { font-size: 0.9rem; }
+      .comp-row.header { font-size: 0.8rem; }
     }
 
     /* HERO */
@@ -389,32 +393,6 @@ function landingPage(): string {
       <div class="feature">No barcode scanning needed</div>
       <div class="val yes">✓</div>
       <div class="val no">✗</div>
-    </div>
-  </div>
-</section>
-
-<!-- TESTIMONIALS -->
-<section class="testimonials">
-  <p class="section-label">Loved by users</p>
-  <h2>What people are saying</h2>
-  <div class="testi-grid">
-    <div class="testi">
-      <div class="stars">★★★★★</div>
-      <p>"I've tried every food tracking app and always quit after a week. Textabite is the first thing that's actually stuck — I just text it without thinking."</p>
-      <div class="author">Sarah M.</div>
-      <div class="role">Lost 12 lbs in 3 months</div>
-    </div>
-    <div class="testi">
-      <div class="stars">★★★★★</div>
-      <p>"The photo feature is insane. I just snap my plate at restaurants and it figures out what I'm eating. No more guessing."</p>
-      <div class="author">James T.</div>
-      <div class="role">Fitness enthusiast</div>
-    </div>
-    <div class="testi">
-      <div class="stars">★★★★★</div>
-      <p>"The morning summary is my favorite part. I wake up, see how I did yesterday, and it actually motivates me to do better today."</p>
-      <div class="author">Priya K.</div>
-      <div class="role">Busy mom of two</div>
     </div>
   </div>
 </section>
