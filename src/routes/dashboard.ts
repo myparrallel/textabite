@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import bcrypt from 'bcrypt';
 import { db } from '../db/client';
-import { sendSms } from '../services/twilio';
 
 const router = Router();
 
@@ -22,60 +22,38 @@ async function requireAuth(req: Request, res: Response, next: NextFunction): Pro
 
 // ── Login ─────────────────────────────────────────────────────────────────────
 
-router.get('/login', (_req, res) => res.type('html').send(loginPage()));
+router.get('/login', (req: Request, res: Response) => {
+  res.type('html').send(loginPage(req.query.error as string));
+});
 
-router.post('/login/send-code', async (req: Request, res: Response): Promise<void> => {
-  const phone = normalizePhone((req.body.phone ?? '').trim());
-  if (!phone) { res.redirect('/login?error=phone'); return; }
+router.post('/login', async (req: Request, res: Response): Promise<void> => {
+  const email = (req.body.email ?? '').trim().toLowerCase();
+  const password = (req.body.password ?? '');
 
-  const code = String(Math.floor(100000 + Math.random() * 900000));
-
-  await db.query(
-    `INSERT INTO otp_codes (phone, code) VALUES ($1, $2)`,
-    [phone, code]
-  );
-
-  // DEV BYPASS: show code on screen when SMS is blocked
-  if (process.env.NODE_ENV !== 'production') {
-    res.redirect(`/login/verify?phone=${encodeURIComponent(phone)}&dev_code=${code}`);
+  if (!email || !password) {
+    res.redirect('/login?error=missing');
     return;
   }
-
-  await sendSms(phone, `Your Textabite login code is ${code}. Expires in 10 minutes.`);
-  res.redirect(`/login/verify?phone=${encodeURIComponent(phone)}`);
-});
-
-router.get('/login/verify', (req: Request, res: Response) => {
-  res.type('html').send(verifyPage(req.query.phone as string, req.query.dev_code as string));
-});
-
-router.post('/login/verify', async (req: Request, res: Response): Promise<void> => {
-  const phone = normalizePhone((req.body.phone ?? '').trim());
-  const code = (req.body.code ?? '').trim();
 
   const { rows } = await db.query(
-    `UPDATE otp_codes SET used = TRUE
-     WHERE phone = $1 AND code = $2 AND used = FALSE AND expires_at > NOW()
-     RETURNING id`,
-    [phone, code]
+    `SELECT id, password_hash FROM users WHERE email = $1`,
+    [email]
   );
 
-  if (rows.length === 0) {
-    res.redirect(`/login/verify?phone=${encodeURIComponent(phone)}&error=invalid`);
+  if (rows.length === 0 || !rows[0].password_hash) {
+    res.redirect('/login?error=invalid');
     return;
   }
 
-  // Upsert user
-  const { rows: userRows } = await db.query<{ id: string }>(
-    `INSERT INTO users (phone) VALUES ($1) ON CONFLICT (phone) DO UPDATE SET phone = EXCLUDED.phone RETURNING id`,
-    [phone]
-  );
-  const userId = userRows[0].id;
+  const valid = await bcrypt.compare(password, rows[0].password_hash);
+  if (!valid) {
+    res.redirect('/login?error=invalid');
+    return;
+  }
 
-  // Create session
   const { rows: sessionRows } = await db.query<{ token: string }>(
     `INSERT INTO sessions (user_id) VALUES ($1) RETURNING token`,
-    [userId]
+    [rows[0].id]
   );
 
   res.setHeader('Set-Cookie', `session=${sessionRows[0].token}; HttpOnly; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax`);
@@ -87,13 +65,64 @@ router.post('/logout', (req: Request, res: Response) => {
   res.redirect('/login');
 });
 
+// ── Set password (waitlist → active user flow) ────────────────────────────────
+
+router.get('/set-password', async (req: Request, res: Response): Promise<void> => {
+  const { token } = req.query as { token?: string };
+  if (!token) { res.redirect('/login'); return; }
+
+  const { rows } = await db.query(
+    `SELECT id FROM password_reset_tokens WHERE token = $1 AND used = FALSE AND expires_at > NOW()`,
+    [token]
+  );
+  if (rows.length === 0) {
+    res.type('html').send(setPasswordPage(token, 'expired'));
+    return;
+  }
+  res.type('html').send(setPasswordPage(token));
+});
+
+router.post('/set-password', async (req: Request, res: Response): Promise<void> => {
+  const { token, password, confirm } = req.body as { token?: string; password?: string; confirm?: string };
+
+  if (!token || !password || password.length < 8) {
+    res.type('html').send(setPasswordPage(token ?? '', 'weak'));
+    return;
+  }
+  if (password !== confirm) {
+    res.type('html').send(setPasswordPage(token, 'mismatch'));
+    return;
+  }
+
+  const { rows } = await db.query(
+    `UPDATE password_reset_tokens SET used = TRUE
+     WHERE token = $1 AND used = FALSE AND expires_at > NOW()
+     RETURNING user_id`,
+    [token]
+  );
+  if (rows.length === 0) {
+    res.type('html').send(setPasswordPage(token, 'expired'));
+    return;
+  }
+
+  const hash = await bcrypt.hash(password, 12);
+  await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [hash, rows[0].user_id]);
+
+  const { rows: sessionRows } = await db.query<{ token: string }>(
+    `INSERT INTO sessions (user_id) VALUES ($1) RETURNING token`,
+    [rows[0].user_id]
+  );
+  res.setHeader('Set-Cookie', `session=${sessionRows[0].token}; HttpOnly; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax`);
+  res.redirect('/dashboard');
+});
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 router.get('/dashboard', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const userId = res.locals.userId as string;
 
   const [userRes, settingsRes, subRes, mealsRes] = await Promise.all([
-    db.query(`SELECT phone, timezone FROM users WHERE id = $1`, [userId]),
+    db.query(`SELECT phone, email, timezone FROM users WHERE id = $1`, [userId]),
     db.query(`SELECT * FROM user_settings WHERE user_id = $1`, [userId]),
     db.query(`SELECT plan, status, current_period_end FROM subscriptions WHERE user_id = $1 AND status = 'active' LIMIT 1`, [userId]),
     db.query(
@@ -155,32 +184,30 @@ export default router;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
-  return phone.startsWith('+') ? phone : `+${digits}`;
-}
-
 // ── HTML Templates ────────────────────────────────────────────────────────────
 
-function loginPage(): string {
+function loginPage(error?: string): string {
+  const errorMsg = error === 'invalid' ? 'Email or password is incorrect.'
+    : error === 'missing' ? 'Please enter your email and password.'
+    : '';
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login – Textabite</title>
+  <title>Log in – Textabite</title>
   ${sharedStyles()}
 </head>
 <body>
   <nav>${logo()}</nav>
   <div class="auth-wrap">
     <div class="auth-card">
-      <h1>Welcome back 👋</h1>
-      <p class="sub">Enter your phone number and we'll text you a login code.</p>
-      <form action="/login/send-code" method="POST">
-        <input type="tel" name="phone" placeholder="+1 (555) 000-0000" required>
-        <button type="submit">Send code →</button>
+      <h1>Welcome back</h1>
+      <p class="sub">Log in to your Textabite dashboard.</p>
+      ${errorMsg ? `<div class="auth-error">${errorMsg}</div>` : ''}
+      <form action="/login" method="POST">
+        <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+        <input type="password" name="password" placeholder="Password" required autocomplete="current-password">
+        <button type="submit">Log in →</button>
       </form>
       <p class="back"><a href="/">← Back to home</a></p>
     </div>
@@ -189,29 +216,32 @@ function loginPage(): string {
 </html>`;
 }
 
-function verifyPage(phone: string, devCode?: string): string {
+function setPasswordPage(token: string, error?: string): string {
+  const errorMsg = error === 'expired' ? 'This link has expired or already been used. Contact support.'
+    : error === 'weak' ? 'Password must be at least 8 characters.'
+    : error === 'mismatch' ? 'Passwords do not match.'
+    : '';
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify – Textabite</title>
+  <title>Set your password – Textabite</title>
   ${sharedStyles()}
 </head>
 <body>
   <nav>${logo()}</nav>
   <div class="auth-wrap">
     <div class="auth-card">
-      <h1>Check your texts 📱</h1>
-      <p class="sub">We sent a 6-digit code to ${phone}.</p>
-      ${devCode ? `<div style="background:#fef3c7;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:0.9rem;color:#92400e;">
-        <strong>Dev mode:</strong> Your code is <strong style="font-size:1.2rem;letter-spacing:4px;">${devCode}</strong>
-      </div>` : ''}
-      <form action="/login/verify" method="POST">
-        <input type="hidden" name="phone" value="${phone}">
-        <input type="text" name="code" placeholder="000000" maxlength="6" inputmode="numeric" required autocomplete="one-time-code" ${devCode ? `value="${devCode}"` : ''}>
-        <button type="submit">Verify →</button>
-      </form>
-      <p class="back"><a href="/login">← Try a different number</a></p>
+      <h1>Create your password</h1>
+      <p class="sub">You're in. Set a password to access your dashboard anytime.</p>
+      ${errorMsg ? `<div class="auth-error">${errorMsg}</div>` : ''}
+      ${error === 'expired' ? '<p class="back"><a href="/">← Back to home</a></p>' : `
+      <form action="/set-password" method="POST">
+        <input type="hidden" name="token" value="${token}">
+        <input type="password" name="password" placeholder="Password (min 8 characters)" required minlength="8" autocomplete="new-password">
+        <input type="password" name="confirm" placeholder="Confirm password" required autocomplete="new-password">
+        <button type="submit">Set password & go to dashboard →</button>
+      </form>`}
     </div>
   </div>
 </body>
@@ -219,7 +249,7 @@ function verifyPage(phone: string, devCode?: string): string {
 }
 
 function dashboardPage(
-  user: { phone: string; timezone: string },
+  user: { phone: string | null; email: string | null; timezone: string },
   settings: Record<string, unknown>,
   sub: { plan: string; status: string; current_period_end: Date } | undefined,
   meals: { description: string; calories: number; protein_g: number; carbs_g: number; fat_g: number; logged_at: Date }[]
@@ -247,7 +277,7 @@ function dashboardPage(
     .dashboard { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
     .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 12px; }
     .dash-header h1 { font-size: 1.6rem; font-weight: 800; }
-    .plan-badge { background: ${isPremium ? '#fef3c7' : '#f0fdf4'}; color: ${isPremium ? '#92400e' : '#15803d'}; padding: 6px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; }
+    .plan-badge { background: ${isPremium ? '#fef3c7' : '#FFFDE7'}; color: ${isPremium ? '#92400e' : '#C9A227'}; padding: 6px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; }
     .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
     .stat { background: #f9fafb; border-radius: 12px; padding: 20px; border: 1px solid #f0f0f0; }
     .stat .label { font-size: 0.8rem; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
@@ -259,15 +289,15 @@ function dashboardPage(
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group label { font-size: 0.85rem; font-weight: 600; color: #374151; }
     .form-group input, .form-group select { padding: 10px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem; outline: none; }
-    .form-group input:focus, .form-group select:focus { border-color: #16a34a; box-shadow: 0 0 0 3px #dcfce7; }
+    .form-group input:focus, .form-group select:focus { border-color: #C9A227; box-shadow: 0 0 0 3px rgba(255,224,102,0.3); }
     .toggle-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f9fafb; }
     .toggle-row:last-child { border-bottom: none; }
     .toggle-row label { font-size: 0.95rem; color: #374151; flex: 1; }
     .toggle-row input[type=time] { padding: 6px 10px; border: 1.5px solid #e5e7eb; border-radius: 6px; font-size: 0.9rem; }
     .premium-gate { background: #fef3c7; border-radius: 10px; padding: 16px; font-size: 0.9rem; color: #92400e; margin-top: 12px; }
     .premium-gate a { color: #92400e; font-weight: 600; }
-    .save-btn { background: #16a34a; color: #fff; border: none; border-radius: 8px; padding: 12px 28px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px; }
-    .save-btn:hover { background: #15803d; }
+    .save-btn { background: #C9A227; color: #fff; border: none; border-radius: 8px; padding: 12px 28px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .save-btn:hover { background: #a8871f; }
     .meals-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
     .meals-table th { text-align: left; padding: 8px 12px; font-size: 0.78rem; color: #6b7280; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; }
     .meals-table td { padding: 10px 12px; border-bottom: 1px solid #f9fafb; color: #374151; }
@@ -289,7 +319,7 @@ function dashboardPage(
 <nav>
   ${logo()}
   <div style="display:flex;gap:16px;align-items:center;">
-    <span style="font-size:0.88rem;color:#6b7280;">${user.phone}</span>
+    <span style="font-size:0.88rem;color:#8A8060;">${user.email ?? user.phone ?? ''}</span>
     <form action="/logout" method="POST" style="margin:0;">
       <button style="background:none;border:1px solid #e5e7eb;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.88rem;">Log out</button>
     </form>
@@ -440,18 +470,19 @@ function sharedStyles(): string {
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; color: #111; }
     nav { display: flex; justify-content: space-between; align-items: center; padding: 18px 40px; background: #fff; border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; z-index: 10; }
-    .logo { font-size: 1.4rem; font-weight: 800; color: #16a34a; text-decoration: none; }
-    .auth-wrap { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 64px); padding: 24px; }
+    .logo { font-size: 1.4rem; font-weight: 800; color: #2E2A14; text-decoration: none; }
+    .auth-wrap { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 64px); padding: 24px; background: #FFFDE7; }
     .auth-card { background: #fff; border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 400px; box-shadow: 0 4px 24px rgba(0,0,0,.07); }
-    .auth-card h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; }
-    .auth-card .sub { color: #6b7280; font-size: 0.95rem; margin-bottom: 28px; line-height: 1.5; }
+    .auth-card h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; color: #2E2A14; }
+    .auth-card .sub { color: #8A8060; font-size: 0.95rem; margin-bottom: 28px; line-height: 1.5; }
     .auth-card form { display: flex; flex-direction: column; gap: 12px; }
-    .auth-card input { padding: 13px 16px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 1rem; outline: none; }
-    .auth-card input:focus { border-color: #16a34a; box-shadow: 0 0 0 3px #dcfce7; }
-    .auth-card button { padding: 13px; background: #16a34a; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; }
-    .auth-card button:hover { background: #15803d; }
+    .auth-card input { padding: 13px 16px; border: 1.5px solid #e8e4dd; border-radius: 8px; font-size: 1rem; outline: none; }
+    .auth-card input:focus { border-color: #C9A227; box-shadow: 0 0 0 3px rgba(255,224,102,0.3); }
+    .auth-card button { padding: 13px; background: #C9A227; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+    .auth-card button:hover { background: #a8871f; }
     .auth-card .back { margin-top: 16px; text-align: center; font-size: 0.85rem; }
-    .auth-card .back a { color: #6b7280; text-decoration: none; }
+    .auth-card .back a { color: #8A8060; text-decoration: none; }
+    .auth-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; border-radius: 8px; padding: 12px 14px; font-size: 0.88rem; margin-bottom: 16px; }
   </style>`;
 }
 

@@ -1,10 +1,21 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE IF NOT EXISTS users (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  phone       TEXT NOT NULL UNIQUE,
-  timezone    TEXT NOT NULL DEFAULT 'America/New_York',
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  phone         TEXT UNIQUE,
+  email         TEXT UNIQUE,
+  password_hash TEXT,
+  timezone      TEXT NOT NULL DEFAULT 'America/New_York',
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token      TEXT NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(32), 'hex'),
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '24 hours',
+  used       BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS subscriptions (
@@ -101,3 +112,19 @@ CREATE INDEX IF NOT EXISTS water_logs_user        ON water_logs (user_id, logged
 CREATE INDEX IF NOT EXISTS subscriptions_user     ON subscriptions (user_id);
 CREATE INDEX IF NOT EXISTS otp_codes_phone        ON otp_codes (phone);
 CREATE INDEX IF NOT EXISTS sessions_token         ON sessions (token);
+
+-- Migration: add email/password auth (run once)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE users ALTER COLUMN phone DROP NOT NULL;
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token      TEXT NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(32), 'hex'),
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '24 hours',
+  used       BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS password_reset_tokens_token ON password_reset_tokens (token);
