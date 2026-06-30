@@ -9,7 +9,7 @@ export async function sendDailySummaries(userIds?: string[]): Promise<void> {
 
   const params = userIds && userIds.length > 0 ? [userIds] : [];
 
-  const { rows: users } = await db.query<{ id: string; phone: string; timezone: string }>(
+  const { rows: users } = await db.query<{ id: string; phone: string | null; timezone: string }>(
     `SELECT u.id, u.phone, u.timezone
      FROM users u
      JOIN subscriptions s ON s.user_id = u.id
@@ -20,7 +20,8 @@ export async function sendDailySummaries(userIds?: string[]): Promise<void> {
   await Promise.allSettled(users.map(user => sendSummaryForUser(user)));
 }
 
-async function sendSummaryForUser(user: { id: string; phone: string; timezone: string }): Promise<void> {
+async function sendSummaryForUser(user: { id: string; phone: string | null; timezone: string }): Promise<void> {
+  if (!user.phone) return; // email-only users have no SMS channel yet
   const { rows: settingsRows } = await db.query(
     `SELECT goal_preset, calorie_goal, protein_goal_g, carbs_goal_g, fat_goal_g FROM user_settings WHERE user_id = $1`,
     [user.id]

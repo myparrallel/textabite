@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import { db } from '../db/client';
+import { sendSetPasswordEmail } from '../services/email';
 
 const router = Router();
 
@@ -56,13 +57,40 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     [rows[0].id]
   );
 
-  res.setHeader('Set-Cookie', `session=${sessionRows[0].token}; HttpOnly; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax`);
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `session=${sessionRows[0].token}; HttpOnly; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax${secure}`);
   res.redirect('/dashboard');
 });
 
 router.post('/logout', (req: Request, res: Response) => {
   res.setHeader('Set-Cookie', 'session=; HttpOnly; Path=/; Max-Age=0');
   res.redirect('/login');
+});
+
+// ── Forgot password ───────────────────────────────────────────────────────────
+
+router.get('/forgot-password', (_req: Request, res: Response) => {
+  res.type('html').send(forgotPasswordPage());
+});
+
+router.post('/forgot-password', async (req: Request, res: Response): Promise<void> => {
+  const email = (req.body.email ?? '').trim().toLowerCase();
+  if (email) {
+    const { rows } = await db.query(`SELECT id FROM users WHERE email = $1`, [email]);
+    if (rows.length > 0) {
+      // Invalidate any existing unused tokens
+      await db.query(`UPDATE password_reset_tokens SET used = TRUE WHERE user_id = $1 AND used = FALSE`, [rows[0].id]);
+      const { rows: tokenRows } = await db.query<{ token: string }>(
+        `INSERT INTO password_reset_tokens (user_id) VALUES ($1) RETURNING token`,
+        [rows[0].id]
+      );
+      sendSetPasswordEmail(email, tokenRows[0].token).catch(err =>
+        console.error('Forgot-password email error:', err)
+      );
+    }
+  }
+  // Always show success to prevent email enumeration
+  res.type('html').send(forgotPasswordPage('sent'));
 });
 
 // ── Set password (waitlist → active user flow) ────────────────────────────────
@@ -112,7 +140,8 @@ router.post('/set-password', async (req: Request, res: Response): Promise<void> 
     `INSERT INTO sessions (user_id) VALUES ($1) RETURNING token`,
     [rows[0].user_id]
   );
-  res.setHeader('Set-Cookie', `session=${sessionRows[0].token}; HttpOnly; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax`);
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `session=${sessionRows[0].token}; HttpOnly; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax${secure}`);
   res.redirect('/dashboard');
 });
 
@@ -209,7 +238,36 @@ function loginPage(error?: string): string {
         <input type="password" name="password" placeholder="Password" required autocomplete="current-password">
         <button type="submit">Log in →</button>
       </form>
+      <p class="back" style="margin-top:12px;"><a href="/forgot-password" style="color:#C9A227;">Forgot password?</a></p>
       <p class="back"><a href="/">← Back to home</a></p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function forgotPasswordPage(state?: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset password – Textabite</title>
+  ${sharedStyles()}
+</head>
+<body>
+  <nav>${logo()}</nav>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h1>Reset password</h1>
+      ${state === 'sent'
+        ? `<p class="sub">If that email has an account, we've sent a reset link. Check your inbox.</p>
+           <p class="back"><a href="/login">← Back to login</a></p>`
+        : `<p class="sub">Enter your email and we'll send you a link to set a new password.</p>
+           <form action="/forgot-password" method="POST">
+             <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+             <button type="submit">Send reset link →</button>
+           </form>
+           <p class="back"><a href="/login">← Back to login</a></p>`}
     </div>
   </div>
 </body>
@@ -329,8 +387,19 @@ function dashboardPage(
 <div class="dashboard">
   <div class="dash-header">
     <h1>Your Dashboard</h1>
-    <span class="plan-badge">${isPremium ? '⭐ Premium' : 'Basic'}</span>
+    <span class="plan-badge">${isPremium ? '⭐ Premium' : sub ? 'Basic' : 'No plan'}</span>
   </div>
+
+  ${!sub ? `<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:18px 24px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <strong style="color:#92400e;">You don't have an active subscription.</strong>
+      <span style="color:#92400e;font-size:0.9rem;"> Start your 14-day free trial to begin logging meals.</span>
+    </div>
+    <form action="/checkout" method="POST" style="margin:0;">
+      <input type="hidden" name="plan" value="basic">
+      <button type="submit" style="background:#C9A227;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:0.95rem;font-weight:700;cursor:pointer;white-space:nowrap;">Subscribe →</button>
+    </form>
+  </div>` : ''}
 
   <div class="stats">
     <div class="stat">

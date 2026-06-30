@@ -18,15 +18,15 @@ export function scheduleJobs(): void {
 }
 
 async function fireDueSummaries(utcHHMM: string): Promise<void> {
-  // Find users whose summary_time (stored as local TIME) matches UTC now
-  // For simplicity we compare UTC time; timezone-aware scheduling can be added later
+  // Compare summary_time against the current time in each user's own timezone
   const { rows } = await db.query<{ user_id: string }>(
     `SELECT us.user_id
      FROM user_settings us
      JOIN subscriptions s ON s.user_id = us.user_id
+     JOIN users u ON u.id = us.user_id
      WHERE s.status = 'active'
-       AND to_char(us.summary_time, 'HH24:MI') = $1`,
-    [utcHHMM]
+       AND to_char(us.summary_time, 'HH24:MI') = to_char(NOW() AT TIME ZONE u.timezone, 'HH24:MI')`,
+    []
   );
 
   if (rows.length > 0) {
@@ -36,9 +36,8 @@ async function fireDueSummaries(utcHHMM: string): Promise<void> {
 }
 
 async function fireDueReminders(utcHHMM: string): Promise<void> {
-  // reminders column: [{label, time, enabled}]
-  const { rows } = await db.query<{ user_id: string; phone: string; reminders: { label: string; time: string; enabled: boolean }[] }>(
-    `SELECT u.id AS user_id, u.phone, us.reminders
+  const { rows } = await db.query<{ user_id: string; phone: string; timezone: string; reminders: { label: string; time: string; enabled: boolean }[] }>(
+    `SELECT u.id AS user_id, u.phone, u.timezone, us.reminders
      FROM users u
      JOIN user_settings us ON us.user_id = u.id
      JOIN subscriptions s ON s.user_id = u.id
@@ -48,7 +47,8 @@ async function fireDueReminders(utcHHMM: string): Promise<void> {
   );
 
   for (const row of rows) {
-    const due = (row.reminders ?? []).filter(r => r.enabled && r.time === utcHHMM);
+    const localHHMM = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: row.timezone });
+    const due = (row.reminders ?? []).filter(r => r.enabled && r.time === localHHMM);
     for (const reminder of due) {
       try {
         const msg = await generateReminder(reminder.label);

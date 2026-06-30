@@ -11,13 +11,7 @@ router.get('/', (_req: Request, res: Response) => {
 });
 
 router.post('/checkout', async (req: Request, res: Response): Promise<void> => {
-  const phone: string = (req.body.phone ?? '').trim();
   const plan: string = (req.body.plan ?? 'basic').trim();
-
-  if (!phone) {
-    res.redirect('/?error=phone');
-    return;
-  }
 
   const priceId = plan === 'premium'
     ? process.env.STRIPE_PRICE_ID_PREMIUM!
@@ -27,11 +21,10 @@ router.post('/checkout', async (req: Request, res: Response): Promise<void> => {
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      phone_number_collection: { enabled: true },
-      metadata: { phone, plan },
+      metadata: { plan },
       subscription_data: { trial_period_days: 14 },
       success_url: `${APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${APP_URL}/cancel`,
+      cancel_url: `${APP_URL}/#pricing`,
     });
 
     res.redirect(303, session.url!);
@@ -452,8 +445,11 @@ function landingPage(): string {
         <li class="no"><span>✗</span> "Should I eat this?" advisor</li>
         <li class="no"><span>✗</span> Meal reminders</li>
       </ul>
-      <button onclick="openWaitlist('basic')" class="btn-basic">Join waitlist →</button>
-      <p class="price-guarantee">🔒 Launching soon · Be first in line</p>
+      <form action="/checkout" method="POST" style="margin:0;">
+        <input type="hidden" name="plan" value="basic">
+        <button type="submit" class="btn-basic">Start 14-day free trial →</button>
+      </form>
+      <p class="price-guarantee">🔒 14-day free trial · Cancel anytime</p>
     </div>
 
     <!-- PREMIUM -->
@@ -472,8 +468,11 @@ function landingPage(): string {
         <li><span class="check">✓</span> Friendly check-in texts</li>
         <li><span class="check">✓</span> Dashboard with meal history</li>
       </ul>
-      <button onclick="openWaitlist('premium')" class="btn-premium">Join waitlist →</button>
-      <p class="price-guarantee">🔒 Launching soon · Be first in line</p>
+      <form action="/checkout" method="POST" style="margin:0;">
+        <input type="hidden" name="plan" value="premium">
+        <button type="submit" class="btn-premium">Start 14-day free trial →</button>
+      </form>
+      <p class="price-guarantee">🔒 14-day free trial · Cancel anytime</p>
     </div>
 
   </div>

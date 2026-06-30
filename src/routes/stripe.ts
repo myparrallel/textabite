@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import Stripe from 'stripe';
 import { db } from '../db/client';
+import { sendSetPasswordEmail } from '../services/email';
 
 const router = Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -56,14 +57,14 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 });
 
 async function upsertSubscription(sub: Stripe.Subscription): Promise<void> {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
   const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
 
-  // Determine plan from price ID
   const priceId = sub.items.data[0]?.price.id;
   const plan = priceId === process.env.STRIPE_PRICE_ID_PREMIUM ? 'premium' : 'basic';
 
-  // Get phone from checkout session metadata if available
-  const { rows: sessionRows } = await db.query<{ id: string }>(
+  // Check if we already have a user linked via an existing subscription
+  const { rows: existingRows } = await db.query<{ id: string }>(
     `SELECT u.id FROM users u
      JOIN subscriptions s ON s.user_id = u.id
      WHERE s.stripe_customer_id = $1
@@ -71,37 +72,51 @@ async function upsertSubscription(sub: Stripe.Subscription): Promise<void> {
     [customerId]
   );
 
-  if (sessionRows.length === 0) {
-    // Try to find user by phone stored in subscription metadata
-    const phone = sub.metadata?.phone;
-    const userIdQuery = phone
-      ? `(SELECT id FROM users WHERE phone = $6 LIMIT 1)`
-      : `NULL`;
+  let userId: string;
 
-    await db.query(
-      `INSERT INTO subscriptions (user_id, stripe_customer_id, stripe_subscription_id, plan, status, current_period_end)
-       VALUES (${userIdQuery}, $1, $2, $3, $4, $5)
-       ON CONFLICT (stripe_subscription_id) DO UPDATE
-         SET plan = EXCLUDED.plan,
-             status = EXCLUDED.status,
-             current_period_end = EXCLUDED.current_period_end,
-             updated_at = NOW()`,
-      phone
-        ? [customerId, sub.id, plan, sub.status, new Date(sub.current_period_end * 1000), phone]
-        : [customerId, sub.id, plan, sub.status, new Date(sub.current_period_end * 1000)]
-    );
+  if (existingRows.length > 0) {
+    userId = existingRows[0].id;
   } else {
-    await db.query(
-      `INSERT INTO subscriptions (user_id, stripe_customer_id, stripe_subscription_id, plan, status, current_period_end)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (stripe_subscription_id) DO UPDATE
-         SET plan = EXCLUDED.plan,
-             status = EXCLUDED.status,
-             current_period_end = EXCLUDED.current_period_end,
-             updated_at = NOW()`,
-      [sessionRows[0].id, customerId, sub.id, plan, sub.status, new Date(sub.current_period_end * 1000)]
+    // Find or create user by the Stripe customer's email
+    const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+    const email = customer.email?.toLowerCase().trim();
+
+    if (!email) {
+      console.error(`Stripe customer ${customerId} has no email — cannot link subscription`);
+      return;
+    }
+
+    // Find existing user or create a new one
+    const { rows: userRows } = await db.query<{ id: string; password_hash: string | null }>(
+      `INSERT INTO users (email) VALUES ($1)
+       ON CONFLICT (email) DO UPDATE SET email = EXCLUDED.email
+       RETURNING id, password_hash`,
+      [email]
     );
+    userId = userRows[0].id;
+
+    // If this is a brand-new user (no password set), send them a set-password email
+    if (!userRows[0].password_hash) {
+      const { rows: tokenRows } = await db.query<{ token: string }>(
+        `INSERT INTO password_reset_tokens (user_id) VALUES ($1) RETURNING token`,
+        [userId]
+      );
+      sendSetPasswordEmail(email, tokenRows[0].token).catch(err =>
+        console.error('Set-password email error:', err)
+      );
+    }
   }
+
+  await db.query(
+    `INSERT INTO subscriptions (user_id, stripe_customer_id, stripe_subscription_id, plan, status, current_period_end)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (stripe_subscription_id) DO UPDATE
+       SET plan = EXCLUDED.plan,
+           status = EXCLUDED.status,
+           current_period_end = EXCLUDED.current_period_end,
+           updated_at = NOW()`,
+    [userId, customerId, sub.id, plan, sub.status, new Date(sub.current_period_end * 1000)]
+  );
 }
 
 export default router;
