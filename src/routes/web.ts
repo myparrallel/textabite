@@ -76,10 +76,13 @@ function landingPage(): string {
     nav .nav-links a.cta { background: var(--accent2); color: #fff; padding: 10px 20px; border-radius: 8px; }
     nav .nav-links a.cta:hover { background: #a8871f; }
     nav .nav-links a.login { color: var(--ink); font-weight: 600; }
+    .show-mobile { display: none; }
     @media (max-width: 640px) {
       nav { padding: 16px 20px; }
       nav .nav-links .hide-mobile { display: none; }
       .comp-row .feature { font-size: 0.8rem; }
+      .hide-mobile { display: none; }
+      .show-mobile { display: inline; }
     }
 
     /* HERO */
@@ -354,7 +357,7 @@ function landingPage(): string {
     <div class="comp-row header">
       <div class="feature">Feature</div>
       <div class="val brand">Textabite</div>
-      <div class="val">MyFitnessPal</div>
+      <div class="val"><span class="hide-mobile">MyFitnessPal</span><span class="show-mobile">MFP</span></div>
     </div>
     <div class="comp-row">
       <div class="feature">No app required</div>
