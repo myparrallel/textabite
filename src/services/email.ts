@@ -1,11 +1,19 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = 'Textabite <support@textabite.com>';
-const APP_URL = process.env.APP_URL ?? 'https://textabite.com';
+
+function getClient(): Resend {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error('RESEND_API_KEY is not set');
+  return new Resend(key);
+}
+
+function getAppUrl(): string {
+  return process.env.APP_URL ?? 'https://textabite.com';
+}
 
 export async function sendWaitlistConfirmation(name: string, email: string): Promise<void> {
-  await resend.emails.send({
+  await getClient().emails.send({
     from: FROM,
     to: email,
     subject: "You're on the Textabite waitlist",
@@ -59,7 +67,7 @@ export async function sendWaitlistConfirmation(name: string, email: string): Pro
 
           <table cellpadding="0" cellspacing="0">
             <tr><td style="border-radius:8px;background:#C9A227;">
-              <a href="${APP_URL}" style="display:inline-block;padding:14px 28px;color:#fff;font-size:1rem;font-weight:700;text-decoration:none;">Try the demo →</a>
+              <a href="${getAppUrl()}" style="display:inline-block;padding:14px 28px;color:#fff;font-size:1rem;font-weight:700;text-decoration:none;">Try the demo →</a>
             </td></tr>
           </table>
         </td></tr>
@@ -78,8 +86,8 @@ export async function sendWaitlistConfirmation(name: string, email: string): Pro
 }
 
 export async function sendSetPasswordEmail(email: string, token: string): Promise<void> {
-  const link = `${APP_URL}/set-password?token=${token}`;
-  await resend.emails.send({
+  const link = `${getAppUrl()}/set-password?token=${token}`;
+  await getClient().emails.send({
     from: FROM,
     to: email,
     subject: "Set your password — Textabite is live",
