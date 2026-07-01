@@ -10,6 +10,7 @@ export type Intent =
   | 'delete_meal'
   | 'correct_meal'
   | 'weekly_summary'
+  | 'today_summary'
   | 'should_i_eat'
   | 'goal_setting'
   | 'reminder_reply'
@@ -53,6 +54,7 @@ Intents:
 - delete_meal: user wants to delete or undo their last logged meal (e.g. "delete that", "undo last meal", "remove that entry")
 - correct_meal: user wants to correct or edit their last meal (e.g. "actually it was 2 eggs", "change that to a large fries")
 - weekly_summary: user wants a summary of their week (e.g. "how'd I do this week", "weekly recap", "show my week")
+- today_summary: user wants to know what they've eaten today or how they're doing today (e.g. "what did I eat today", "how am I doing", "what's my total", "calories so far", "what have I logged")
 - should_i_eat: user is asking whether they should eat something, if it fits their goals, or what they have left for the day
 - goal_setting: user wants to set or update their nutrition goals
 - reminder_reply: user is replying to a meal reminder (e.g. "yeah I had a salad", "nope skipped lunch")
@@ -62,7 +64,7 @@ Intents:
   });
 
   const raw = msg.content[0].type === 'text' ? msg.content[0].text.trim() : '';
-  const valid: Intent[] = ['log_meal', 'log_water', 'delete_meal', 'correct_meal', 'weekly_summary', 'should_i_eat', 'goal_setting', 'reminder_reply', 'help', 'unknown'];
+  const valid: Intent[] = ['log_meal', 'log_water', 'delete_meal', 'correct_meal', 'weekly_summary', 'today_summary', 'should_i_eat', 'goal_setting', 'reminder_reply', 'help', 'unknown'];
   return valid.includes(raw as Intent) ? (raw as Intent) : 'unknown';
 }
 
@@ -258,8 +260,35 @@ export async function generateReminder(label: string, userName?: string): Promis
 
 // ── Help reply ────────────────────────────────────────────────────────────────
 
+export async function todaySummaryReply(
+  meals: { description: string; calories: number; protein_g: number; carbs_g: number; fat_g: number }[],
+  goals?: UserGoals
+): Promise<string> {
+  if (meals.length === 0) {
+    return `Nothing logged yet today! Text me your first meal and we'll get started 🍽️`;
+  }
+  const totals = meals.reduce((acc, m) => ({
+    calories: acc.calories + (m.calories ?? 0),
+    protein_g: acc.protein_g + Number(m.protein_g ?? 0),
+    carbs_g: acc.carbs_g + Number(m.carbs_g ?? 0),
+    fat_g: acc.fat_g + Number(m.fat_g ?? 0),
+  }), { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 });
+
+  const goalsContext = goals?.calorie_goal
+    ? `Daily calorie goal: ${goals.calorie_goal}. Remaining: ${Math.max(0, goals.calorie_goal - totals.calories)} cal.`
+    : '';
+
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 160,
+    system: `You are Textabite, a friendly nutrition buddy. The user asked what they've eaten today. Give them a quick, casual rundown. ${goalsContext} Plain text only, no markdown, under 200 chars.`,
+    messages: [{ role: 'user', content: `Today's meals: ${meals.map(m => m.description).join(', ')}. Totals: ${totals.calories} cal, ${totals.protein_g.toFixed(0)}g protein, ${totals.carbs_g.toFixed(0)}g carbs, ${totals.fat_g.toFixed(0)}g fat.` }],
+  });
+  return message.content[0].type === 'text' ? message.content[0].text.trim() : `Today: ${totals.calories} cal | ${totals.protein_g.toFixed(0)}g protein`;
+}
+
 export async function helpReply(): Promise<string> {
-  return `Hey! Just text me what you eat and I'll track the nutrition 🥗 Snap a photo too! Say "delete that" to undo a meal, "log water" to track hydration, or "how'd I do this week?" for a weekly recap. Reply "goals" to set targets.`;
+  return `Hey! Here's what I can do 👇\n📝 Text any meal → instant nutrition\n📸 Send a photo → I'll identify it\n💧 "log water" → hydration tracking\n📊 "how'd I do today?" → today's recap\n📅 "how was my week?" → weekly summary\n🎯 "set my goals" → goal tracking\nSay "delete that" to undo last meal.`;
 }
 
 // ── Water parsing ─────────────────────────────────────────────────────────────

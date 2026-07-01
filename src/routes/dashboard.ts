@@ -150,13 +150,18 @@ router.post('/set-password', async (req: Request, res: Response): Promise<void> 
 router.get('/dashboard', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const userId = res.locals.userId as string;
 
-  const [userRes, settingsRes, subRes, mealsRes] = await Promise.all([
+  const [userRes, settingsRes, subRes, mealsRes, streakRes] = await Promise.all([
     db.query(`SELECT phone, email, timezone FROM users WHERE id = $1`, [userId]),
     db.query(`SELECT * FROM user_settings WHERE user_id = $1`, [userId]),
     db.query(`SELECT plan, status, current_period_end FROM subscriptions WHERE user_id = $1 AND status = 'active' LIMIT 1`, [userId]),
     db.query(
       `SELECT description, calories, protein_g, carbs_g, fat_g, logged_at
        FROM meals WHERE user_id = $1 ORDER BY logged_at DESC LIMIT 20`,
+      [userId]
+    ),
+    db.query<{ date: string }>(
+      `SELECT DISTINCT DATE(logged_at AT TIME ZONE COALESCE((SELECT timezone FROM users WHERE id = $1), 'America/New_York'))::text AS date
+       FROM meals WHERE user_id = $1 ORDER BY date DESC LIMIT 30`,
       [userId]
     ),
   ]);
@@ -166,7 +171,17 @@ router.get('/dashboard', requireAuth, async (req: Request, res: Response): Promi
   const sub = subRes.rows[0];
   const meals = mealsRes.rows;
 
-  res.type('html').send(dashboardPage(user, settings, sub, meals));
+  // Calculate streak
+  let streak = 0;
+  const dates = streakRes.rows.map(r => r.date).sort().reverse();
+  const today = new Date().toISOString().split('T')[0];
+  let check = today;
+  for (const date of dates) {
+    const diff = (new Date(check).getTime() - new Date(date).getTime()) / 86400000;
+    if (diff <= 1) { streak++; check = date; } else break;
+  }
+
+  res.type('html').send(dashboardPage(user, settings, sub, meals, streak));
 });
 
 // ── Settings save ─────────────────────────────────────────────────────────────
@@ -310,7 +325,8 @@ function dashboardPage(
   user: { phone: string | null; email: string | null; timezone: string },
   settings: Record<string, unknown>,
   sub: { plan: string; status: string; current_period_end: Date } | undefined,
-  meals: { description: string; calories: number; protein_g: number; carbs_g: number; fat_g: number; logged_at: Date }[]
+  meals: { description: string; calories: number; protein_g: number; carbs_g: number; fat_g: number; logged_at: Date }[],
+  streak: number = 0
 ): string {
   const isPremium = sub?.plan === 'premium';
   const reminders: { label: string; time: string; enabled: boolean }[] = (settings.reminders as []) ?? [];
@@ -324,6 +340,9 @@ function dashboardPage(
 
   const todayCalories = todayMeals.reduce((sum, m) => sum + (m.calories ?? 0), 0);
   const todayProtein = todayMeals.reduce((sum, m) => sum + Number(m.protein_g ?? 0), 0);
+  const calorieGoal = Number(settings.calorie_goal ?? 0);
+  const calorieProgress = calorieGoal > 0 ? Math.min(100, Math.round((todayCalories / calorieGoal) * 100)) : 0;
+  const calorieOver = calorieGoal > 0 && todayCalories > calorieGoal;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -361,6 +380,10 @@ function dashboardPage(
     .meals-table td { padding: 10px 12px; border-bottom: 1px solid #f9fafb; color: #374151; }
     .meals-table tr:last-child td { border-bottom: none; }
     .saved-banner { background: #dcfce7; color: #15803d; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: 600; font-size: 0.9rem; }
+    .progress-wrap { margin-top: 16px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: #6b7280; margin-bottom: 6px; }
+    .progress-bar { height: 8px; background: #f0f0f0; border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
     .meals-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     @media (max-width: 600px) {
       .form-row { grid-template-columns: 1fr; }
@@ -405,6 +428,11 @@ function dashboardPage(
     <div class="stat">
       <div class="label">Today's calories</div>
       <div class="value">${todayCalories}<span class="unit"> cal</span></div>
+      ${calorieGoal > 0 ? `
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Goal: ${calorieGoal} cal</span><span>${calorieProgress}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${calorieProgress}%;background:${calorieOver ? '#ef4444' : '#C9A227'};"></div></div>
+      </div>` : ''}
     </div>
     <div class="stat">
       <div class="label">Today's protein</div>
@@ -414,10 +442,11 @@ function dashboardPage(
       <div class="label">Meals logged today</div>
       <div class="value">${todayMeals.length}</div>
     </div>
-    ${settings.calorie_goal ? `<div class="stat">
-      <div class="label">Calories remaining</div>
-      <div class="value">${Math.max(0, Number(settings.calorie_goal) - todayCalories)}<span class="unit"> cal</span></div>
-    </div>` : ''}
+    <div class="stat">
+      <div class="label">Logging streak</div>
+      <div class="value">${streak}<span class="unit"> day${streak !== 1 ? 's' : ''}</span></div>
+      ${streak >= 3 ? `<div style="font-size:0.8rem;color:#C9A227;margin-top:4px;">🔥 Keep it up!</div>` : ''}
+    </div>
   </div>
 
   <form action="/dashboard/settings" method="POST">
@@ -434,7 +463,7 @@ function dashboardPage(
           </select>
         </div>
         <div class="form-group">
-          <label>EOD summary time</label>
+          <label>Daily summary time</label>
           <input type="time" name="summary_time" value="${settings.summary_time ?? '08:00'}"
             ${!isPremium ? 'disabled title="Upgrade to Premium to customize your summary time"' : ''}>
           ${!isPremium ? '<span style="font-size:0.78rem;color:#9ca3af;">Premium feature</span>' : ''}

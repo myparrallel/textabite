@@ -14,6 +14,7 @@ import {
   handleReminderReply,
   goalOnboardingReply,
   helpReply,
+  todaySummaryReply,
   UserGoals,
   DayTotals,
 } from '../services/claude';
@@ -142,9 +143,9 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           fat_goal_g: settings.fat_goal_g,
         };
 
-        await db.query(
+        const { rows: insertedRows } = await db.query<{ id: string }>(
           `INSERT INTO meals (user_id, raw_text, calories, protein_g, carbs_g, fat_g, description)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
           [user.id, mealText, nutrition.calories, nutrition.protein_g, nutrition.carbs_g, nutrition.fat_g, nutrition.description]
         );
 
@@ -156,6 +157,19 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         );
 
         await sendSms(from, reply);
+
+        // First meal ever — send a tip about what else they can do
+        const { rows: mealCount } = await db.query<{ count: string }>(
+          `SELECT COUNT(*) FROM meals WHERE user_id = $1`,
+          [user.id]
+        );
+        if (parseInt(mealCount[0].count) === 1) {
+          const twilioNumber = process.env.TWILIO_PHONE_NUMBER ?? 'this number';
+          setTimeout(async () => {
+            await sendSms(from, `💡 Pro tip: Save ${twilioNumber} as "Textabite" in your contacts so you always know it's me! You can also text "how'd I do today?", snap a photo of a meal, or text "help" to see everything I can do.`);
+          }, 3000);
+        }
+
         break;
       }
 
@@ -238,6 +252,24 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           );
           await sendSms(from, `Updated! "${nutrition.description}" — ${nutrition.calories} cal, ${nutrition.protein_g}g protein ✓`);
         }
+        break;
+      }
+
+      case 'today_summary': {
+        const { rows: todayMeals } = await db.query<{ description: string; calories: number; protein_g: number; carbs_g: number; fat_g: number }>(
+          `SELECT description, calories, protein_g, carbs_g, fat_g
+           FROM meals
+           WHERE user_id = $1
+             AND logged_at >= (NOW() AT TIME ZONE $2)::date
+           ORDER BY logged_at`,
+          [user.id, user.timezone ?? 'America/New_York']
+        );
+        const goals: UserGoals = {
+          calorie_goal: settings.calorie_goal,
+          protein_goal_g: settings.protein_goal_g,
+        };
+        const reply = await todaySummaryReply(todayMeals, settings.calorie_goal ? goals : undefined);
+        await sendSms(from, reply);
         break;
       }
 
