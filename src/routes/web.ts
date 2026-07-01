@@ -241,6 +241,7 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
   <a href="/" class="logo" style="text-decoration:none;color:inherit;">Textabite</a>
   <div class="nav-links">
     <a href="#how" class="hide-mobile">How it works</a>
+    <a href="/features" class="hide-mobile">Features</a>
     <a href="#pricing" class="hide-mobile">Pricing</a>
     <a href="/login" class="hide-mobile login">Log in</a>
     <a href="#faq" class="hide-mobile">FAQ</a>

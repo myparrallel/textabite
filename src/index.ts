@@ -9,6 +9,7 @@ import legalRouter from './routes/legal';
 import webRouter from './routes/web';
 import dashboardRouter from './routes/dashboard';
 import demoRouter from './routes/demo';
+import featuresRouter from './routes/features';
 import { scheduleJobs } from './cron/dailySummary';
 
 const app = express();
@@ -33,6 +34,7 @@ app.get('/demo', (_req, res) => {
 });
 app.use('/', legalRouter);
 app.use('/', dashboardRouter);
+app.use('/', featuresRouter);
 app.use('/', webRouter);
 
 const PORT = process.env.PORT ?? 3000;
