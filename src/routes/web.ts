@@ -228,13 +228,13 @@ function landingPage(): string {
 <body>
 
 <nav>
-  <span class="logo">Textabite</span>
+  <a href="/" class="logo" style="text-decoration:none;color:inherit;">Textabite</a>
   <div class="nav-links">
     <a href="#how" class="hide-mobile">How it works</a>
     <a href="#pricing" class="hide-mobile">Pricing</a>
     <a href="/login" class="hide-mobile login">Log in</a>
     <a href="#faq" class="hide-mobile">FAQ</a>
-    <a href="#pricing" class="cta">Start free trial</a>
+    <a href="#pricing" class="cta">Join waitlist</a>
   </div>
 </nav>
 
@@ -445,11 +445,14 @@ function landingPage(): string {
         <li class="no"><span>✗</span> "Should I eat this?" advisor</li>
         <li class="no"><span>✗</span> Meal reminders</li>
       </ul>
-      <form action="/checkout" method="POST" style="margin:0;">
+      <form action="/waitlist" method="POST" style="margin:0;">
         <input type="hidden" name="plan" value="basic">
-        <button type="submit" class="btn-basic">Start 14-day free trial →</button>
+        <input type="hidden" name="source" value="pricing-basic">
+        <input type="email" name="email" placeholder="Enter your email" required
+          style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dd;border-radius:8px;font-size:0.95rem;margin-bottom:10px;outline:none;">
+        <button type="submit" class="btn-basic">Join the waitlist →</button>
       </form>
-      <p class="price-guarantee">🔒 14-day free trial · Cancel anytime</p>
+      <p class="price-guarantee">🚀 Launching soon · Be first in line</p>
     </div>
 
     <!-- PREMIUM -->
@@ -468,11 +471,14 @@ function landingPage(): string {
         <li><span class="check">✓</span> Friendly check-in texts</li>
         <li><span class="check">✓</span> Dashboard with meal history</li>
       </ul>
-      <form action="/checkout" method="POST" style="margin:0;">
+      <form action="/waitlist" method="POST" style="margin:0;">
         <input type="hidden" name="plan" value="premium">
-        <button type="submit" class="btn-premium">Start 14-day free trial →</button>
+        <input type="hidden" name="source" value="pricing-premium">
+        <input type="email" name="email" placeholder="Enter your email" required
+          style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dd;border-radius:8px;font-size:0.95rem;margin-bottom:10px;outline:none;">
+        <button type="submit" class="btn-premium">Join the waitlist →</button>
       </form>
-      <p class="price-guarantee">🔒 14-day free trial · Cancel anytime</p>
+      <p class="price-guarantee">🚀 Launching soon · Be first in line</p>
     </div>
 
   </div>
