@@ -484,8 +484,14 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
       <form action="/api/demo/waitlist" method="POST" style="margin:0;">
         <input type="hidden" name="plan" value="basic">
         <input type="hidden" name="name" value="Friend">
-        <input type="email" name="email" placeholder="Enter your email" required
+        <input type="email" name="email" placeholder="Email address" required
           style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dd;border-radius:8px;font-size:0.95rem;margin-bottom:10px;outline:none;">
+        <input type="tel" name="phone" placeholder="Phone number (for SMS updates)" required
+          style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dd;border-radius:8px;font-size:0.95rem;margin-bottom:10px;outline:none;">
+        <label style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;cursor:pointer;">
+          <input type="checkbox" name="sms_consent" required style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:#C9A227;">
+          <span style="font-size:0.75rem;color:#8A8060;line-height:1.4;">I agree to receive recurring SMS messages from Textabite at the number provided, including launch notifications, meal logging confirmations, and nutrition summaries. Message &amp; data rates may apply. Message frequency varies. Reply STOP to cancel. <a href="/terms" style="color:#C9A227;">Terms</a> &amp; <a href="/privacy" style="color:#C9A227;">Privacy Policy</a>.</span>
+        </label>
         <button type="submit" class="btn-basic">Join the waitlist →</button>
       </form>
       <p class="price-guarantee">🚀 Launching soon · Be first in line</p>
@@ -510,8 +516,14 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
       <form action="/api/demo/waitlist" method="POST" style="margin:0;">
         <input type="hidden" name="plan" value="premium">
         <input type="hidden" name="name" value="Friend">
-        <input type="email" name="email" placeholder="Enter your email" required
+        <input type="email" name="email" placeholder="Email address" required
           style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dd;border-radius:8px;font-size:0.95rem;margin-bottom:10px;outline:none;">
+        <input type="tel" name="phone" placeholder="Phone number (for SMS updates)" required
+          style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dd;border-radius:8px;font-size:0.95rem;margin-bottom:10px;outline:none;">
+        <label style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;cursor:pointer;">
+          <input type="checkbox" name="sms_consent" required style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:#C9A227;">
+          <span style="font-size:0.75rem;color:#8A8060;line-height:1.4;">I agree to receive recurring SMS messages from Textabite at the number provided, including launch notifications, meal logging confirmations, and nutrition summaries. Message &amp; data rates may apply. Message frequency varies. Reply STOP to cancel. <a href="/terms" style="color:#C9A227;">Terms</a> &amp; <a href="/privacy" style="color:#C9A227;">Privacy Policy</a>.</span>
+        </label>
         <button type="submit" class="btn-premium">Join the waitlist →</button>
       </form>
       <p class="price-guarantee">🚀 Launching soon · Be first in line</p>
