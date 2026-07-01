@@ -74,10 +74,20 @@ router.post('/waitlist', async (req: Request, res: Response): Promise<void> => {
         console.error('Waitlist confirmation email error:', err)
       );
     }
-    res.json({ success: true });
+    const isHtmlRequest = req.headers['accept']?.includes('text/html');
+    if (isHtmlRequest) {
+      res.redirect('/?waitlist=success');
+    } else {
+      res.json({ success: true });
+    }
   } catch (err) {
     console.error('Waitlist error:', err);
-    res.status(500).json({ error: 'Server error' });
+    const isHtmlRequest = req.headers['accept']?.includes('text/html');
+    if (isHtmlRequest) {
+      res.redirect('/?waitlist=error');
+    } else {
+      res.status(500).json({ error: 'Server error' });
+    }
   }
 });
 

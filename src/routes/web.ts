@@ -6,8 +6,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 const APP_URL = process.env.APP_URL!;
 
-router.get('/', (_req: Request, res: Response) => {
-  res.type('html').send(landingPage());
+router.get('/', (req: Request, res: Response) => {
+  res.type('html').send(landingPage(req.query.waitlist as string | undefined));
 });
 
 router.post('/checkout', async (req: Request, res: Response): Promise<void> => {
@@ -46,7 +46,7 @@ export default router;
 
 // ── HTML templates ────────────────────────────────────────────────────────────
 
-function landingPage(): string {
+function landingPage(waitlist?: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -227,6 +227,7 @@ function landingPage(): string {
 </head>
 <body>
 
+${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-align:center;padding:14px;font-weight:600;font-size:0.95rem;">✅ You're on the list! We'll email you the moment we launch.</div>` : ''}
 <nav>
   <a href="/" class="logo" style="text-decoration:none;color:inherit;">Textabite</a>
   <div class="nav-links">
@@ -445,9 +446,9 @@ function landingPage(): string {
         <li class="no"><span>✗</span> "Should I eat this?" advisor</li>
         <li class="no"><span>✗</span> Meal reminders</li>
       </ul>
-      <form action="/waitlist" method="POST" style="margin:0;">
+      <form action="/api/demo/waitlist" method="POST" style="margin:0;">
         <input type="hidden" name="plan" value="basic">
-        <input type="hidden" name="source" value="pricing-basic">
+        <input type="hidden" name="name" value="Friend">
         <input type="email" name="email" placeholder="Enter your email" required
           style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dd;border-radius:8px;font-size:0.95rem;margin-bottom:10px;outline:none;">
         <button type="submit" class="btn-basic">Join the waitlist →</button>
@@ -471,9 +472,9 @@ function landingPage(): string {
         <li><span class="check">✓</span> Friendly check-in texts</li>
         <li><span class="check">✓</span> Dashboard with meal history</li>
       </ul>
-      <form action="/waitlist" method="POST" style="margin:0;">
+      <form action="/api/demo/waitlist" method="POST" style="margin:0;">
         <input type="hidden" name="plan" value="premium">
-        <input type="hidden" name="source" value="pricing-premium">
+        <input type="hidden" name="name" value="Friend">
         <input type="email" name="email" placeholder="Enter your email" required
           style="width:100%;padding:12px 16px;border:1.5px solid #e8e4dd;border-radius:8px;font-size:0.95rem;margin-bottom:10px;outline:none;">
         <button type="submit" class="btn-premium">Join the waitlist →</button>
