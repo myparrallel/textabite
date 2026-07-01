@@ -61,7 +61,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     );
 
     if (subs.length === 0) {
-      await sendSms(from, `Hey! To get started with Textabite, grab a subscription at ${process.env.APP_URL} 🥗`);
+      await sendSms(from, `Hey! 👋 You reached Textabite — the nutrition tracker that lives in your texts. No app needed, just text your meals. Grab a plan at ${process.env.APP_URL} and start your 14-day free trial. Questions? Just reply!`);
       res.sendStatus(204);
       return;
     }
