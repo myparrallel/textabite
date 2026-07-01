@@ -353,6 +353,74 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
   </div>
 </section>
 
+<!-- DASHBOARD PREVIEW -->
+<section style="background:var(--bg);padding:96px 24px;">
+  <div style="max-width:960px;margin:0 auto;">
+    <p class="section-label">Your dashboard</p>
+    <h2 style="text-align:center;font-size:2.2rem;font-weight:800;letter-spacing:-0.5px;margin-bottom:16px;">Your full picture, one login away</h2>
+    <p style="text-align:center;color:var(--muted);max-width:520px;margin:0 auto 56px;line-height:1.7;">Track trends, set goals, view meal history — all in a clean dashboard. Text to log, check in when you want more.</p>
+
+    <div style="background:#fff;border-radius:20px;box-shadow:0 24px 64px rgba(0,0,0,0.1);overflow:hidden;border:1px solid #e8e4dd;">
+      <!-- Mock nav -->
+      <div style="padding:16px 24px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;background:#fff;">
+        <span style="font-weight:800;font-size:1.1rem;color:#2E2A14;">Textabite</span>
+        <span style="font-size:0.85rem;color:#8A8060;">you@example.com</span>
+      </div>
+
+      <div style="padding:28px 24px;">
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+          <span style="font-size:1.3rem;font-weight:800;color:#2E2A14;">Your Dashboard</span>
+          <span style="background:#fef3c7;color:#92400e;padding:5px 14px;border-radius:999px;font-size:0.78rem;font-weight:700;text-transform:uppercase;">⭐ Premium</span>
+        </div>
+
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;">
+          <div style="background:#f9fafb;border-radius:12px;padding:18px;border:1px solid #f0f0f0;">
+            <div style="font-size:0.75rem;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Today's calories</div>
+            <div style="font-size:1.7rem;font-weight:800;color:#111;">1,240<span style="font-size:0.8rem;color:#9ca3af;"> cal</span></div>
+            <div style="margin-top:10px;">
+              <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#6b7280;margin-bottom:4px;"><span>Goal: 2,000 cal</span><span>62%</span></div>
+              <div style="height:7px;background:#f0f0f0;border-radius:999px;overflow:hidden;"><div style="width:62%;height:100%;background:#C9A227;border-radius:999px;"></div></div>
+            </div>
+          </div>
+          <div style="background:#f9fafb;border-radius:12px;padding:18px;border:1px solid #f0f0f0;">
+            <div style="font-size:0.75rem;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Today's protein</div>
+            <div style="font-size:1.7rem;font-weight:800;color:#111;">87<span style="font-size:0.8rem;color:#9ca3af;">g</span></div>
+          </div>
+          <div style="background:#f9fafb;border-radius:12px;padding:18px;border:1px solid #f0f0f0;">
+            <div style="font-size:0.75rem;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Meals today</div>
+            <div style="font-size:1.7rem;font-weight:800;color:#111;">3</div>
+          </div>
+          <div style="background:#f9fafb;border-radius:12px;padding:18px;border:1px solid #f0f0f0;">
+            <div style="font-size:0.75rem;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Logging streak</div>
+            <div style="font-size:1.7rem;font-weight:800;color:#111;">12<span style="font-size:0.8rem;color:#9ca3af;"> days</span></div>
+            <div style="font-size:0.78rem;color:#C9A227;margin-top:4px;">🔥 Keep it up!</div>
+          </div>
+        </div>
+
+        <!-- Recent meals -->
+        <div style="background:#fff;border:1px solid #f0f0f0;border-radius:14px;padding:20px;">
+          <div style="font-size:1rem;font-weight:700;color:#111;margin-bottom:16px;">🍽️ Today's meals</div>
+          <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+            <thead><tr style="border-bottom:1px solid #f0f0f0;">
+              <th style="text-align:left;padding:8px 10px;font-size:0.75rem;color:#6b7280;font-weight:600;text-transform:uppercase;">Meal</th>
+              <th style="text-align:left;padding:8px 10px;font-size:0.75rem;color:#6b7280;font-weight:600;text-transform:uppercase;">Cal</th>
+              <th style="text-align:left;padding:8px 10px;font-size:0.75rem;color:#6b7280;font-weight:600;text-transform:uppercase;">Protein</th>
+              <th style="text-align:left;padding:8px 10px;font-size:0.75rem;color:#6b7280;font-weight:600;text-transform:uppercase;">Time</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #f9fafb;"><td style="padding:10px;">2 scrambled eggs & toast</td><td style="padding:10px;">320</td><td style="padding:10px;">18g</td><td style="padding:10px;color:#9ca3af;">8:14 AM</td></tr>
+              <tr style="border-bottom:1px solid #f9fafb;"><td style="padding:10px;">Grande oat milk latte</td><td style="padding:10px;">180</td><td style="padding:10px;">7g</td><td style="padding:10px;color:#9ca3af;">9:32 AM</td></tr>
+              <tr><td style="padding:10px;">Grilled chicken salad</td><td style="padding:10px;">740</td><td style="padding:10px;">62g</td><td style="padding:10px;color:#9ca3af;">12:48 PM</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- COMPARISON -->
 <section class="comparison">
   <h2>Why Textabite?</h2>
