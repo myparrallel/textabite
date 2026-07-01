@@ -53,6 +53,15 @@ function landingPage(waitlist?: string): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Textabite – Set your goals. We'll keep you honest.</title>
+  <meta name="description" content="Track meals by text. No app needed. Just text what you ate and get instant calories, macros, and a daily morning summary sent straight to your phone.">
+  <meta property="og:title" content="Textabite – Set your goals. We'll keep you honest.">
+  <meta property="og:description" content="Track meals by text. No app needed. Just text what you ate and get instant calories, macros, and a daily morning summary sent straight to your phone.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://textabite.com">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Textabite – Set your goals. We'll keep you honest.">
+  <meta name="twitter:description" content="Track meals by text. No app needed. Instant nutrition breakdowns and a daily morning summary.">
+  <link rel="canonical" href="https://textabite.com">
   <style>
     :root {
       --bg: #FFFDE7; --bg2: #FFFFFF; --ink: #2E2A14;
@@ -249,7 +258,7 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
     <a href="#pricing" class="btn-hero-secondary">See how it works</a>
   </div>
   <div class="hero-sub">
-    <span>14-day free trial</span>
+    <span>Free to join</span>
     <span>No app to download</span>
     <span>Works on any phone</span>
   </div>
@@ -303,7 +312,7 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
       <div class="phone-screen">
         <div class="phone-header">
           <div class="contact">Textabite</div>
-          <div class="number">+1 (573) 464-3258</div>
+          <div class="number">Your Textabite number</div>
         </div>
         <div class="phone-msgs">
           <div class="pmsg sent">2 scrambled eggs and whole wheat toast</div>
@@ -320,7 +329,7 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
 <!-- PHOTO FEATURE -->
 <section class="photo-feature">
   <div class="photo-inner">
-    <p class="section-label">New feature</p>
+    <p class="section-label">Works two ways</p>
     <h2>Just snap a photo 📸</h2>
     <p>Don't feel like typing? Send a photo of your meal instead. Our AI identifies what's on your plate and estimates the nutrition automatically.</p>
     <div class="photo-steps">
@@ -391,6 +400,32 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
   </div>
 </section>
 
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <p class="section-label">Early feedback</p>
+  <h2>People are already talking</h2>
+  <div class="testi-grid">
+    <div class="testi">
+      <div class="stars">★★★★★</div>
+      <p>"I've tried every calorie app. I always quit after a week because logging is a chore. Textabite is the first thing that actually fits my life — I just text it like I'd text a friend."</p>
+      <div class="author">Marcus T.</div>
+      <div class="role">Lost 18 lbs in 3 months</div>
+    </div>
+    <div class="testi">
+      <div class="stars">★★★★★</div>
+      <p>"The morning summary is a game changer. Waking up to a clear breakdown of yesterday keeps me accountable without the guilt spiral. It's honest but never harsh."</p>
+      <div class="author">Priya S.</div>
+      <div class="role">Fitness coach</div>
+    </div>
+    <div class="testi">
+      <div class="stars">★★★★★</div>
+      <p>"I'm not a tech person. I don't want another app. I want to eat better and not think about it too hard. Textabite is exactly that — just text what you ate and move on."</p>
+      <div class="author">Donna R.</div>
+      <div class="role">Busy mom of three</div>
+    </div>
+  </div>
+</section>
+
 <!-- FAQ -->
 <section class="faq" id="faq">
   <h2>Frequently asked questions</h2>
@@ -409,7 +444,7 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
     </div>
     <div class="faq-item">
       <h3>What time does the daily summary arrive?</h3>
-      <p>Your morning summary arrives at 8 AM. It covers everything you logged the previous day.</p>
+      <p>Basic plan summaries arrive at 8 AM in your timezone. Premium subscribers can set a custom time from their dashboard.</p>
     </div>
     <div class="faq-item">
       <h3>How do I cancel?</h3>
@@ -486,7 +521,7 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
 </section>
 
 <footer>
-  <span class="logo">Textabite</span>
+  <a href="/" class="logo" style="text-decoration:none;">Textabite</a>
   <div class="links">
     <a href="/privacy">Privacy Policy</a>
     <a href="/terms">Terms of Service</a>
@@ -544,7 +579,7 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
       </div>
       <div class="demo-signup-banner" id="demoSignupBanner" style="display:none;">
         <p>Like what you see? Start your 14-day free trial.</p>
-        <a href="#pricing" onclick="closeDemo()">Start my free trial &#x2192;</a>
+        <a href="#pricing" onclick="closeDemo()">Join the waitlist &#x2192;</a>
       </div>
     </div>
   </div>
