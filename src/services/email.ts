@@ -33,7 +33,7 @@ export async function sendWaitlistConfirmation(name: string, email: string): Pro
         <!-- Body -->
         <tr><td style="padding:40px 40px 32px;">
           <h1 style="margin:0 0 12px;font-size:1.6rem;font-weight:800;color:#2E2A14;letter-spacing:-0.5px;">You're on the list, ${name.split(' ')[0]}.</h1>
-          <p style="margin:0 0 20px;font-size:1rem;color:#8A8060;line-height:1.6;">Thanks for joining the Textabite waitlist. You'll be first to know when we go live.</p>
+          <p style="margin:0 0 20px;font-size:1rem;color:#8A8060;line-height:1.6;">Thanks for joining the Textabite waitlist. You'll be first to know when we go live — and when we do, just text your meals to <strong style="color:#2E2A14;">(573) GO-HEALTH</strong>.</p>
 
           <table cellpadding="0" cellspacing="0" style="background:#FFFDE7;border-radius:12px;padding:24px;width:100%;margin-bottom:28px;">
             <tr><td>
@@ -105,7 +105,8 @@ export async function sendSetPasswordEmail(email: string, token: string): Promis
 
         <tr><td style="padding:40px 40px 32px;">
           <h1 style="margin:0 0 12px;font-size:1.6rem;font-weight:800;color:#2E2A14;letter-spacing:-0.5px;">We're live. You're in.</h1>
-          <p style="margin:0 0 28px;font-size:1rem;color:#8A8060;line-height:1.6;">Click below to set your password and access your Textabite dashboard. This link expires in 24 hours.</p>
+          <p style="margin:0 0 16px;font-size:1rem;color:#8A8060;line-height:1.6;">Click below to set your password and access your Textabite dashboard. This link expires in 24 hours.</p>
+          <p style="margin:0 0 28px;font-size:1rem;color:#2E2A14;line-height:1.6;background:#FFFDE7;border-radius:10px;padding:16px;">📱 Save <strong>(573) GO-HEALTH</strong> as "Textabite" in your contacts — that's the number you'll text your meals to.</p>
 
           <table cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
             <tr><td style="border-radius:8px;background:#C9A227;">

@@ -164,9 +164,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           [user.id]
         );
         if (parseInt(mealCount[0].count) === 1) {
-          const twilioNumber = process.env.TWILIO_PHONE_NUMBER ?? 'this number';
           setTimeout(async () => {
-            await sendSms(from, `💡 Pro tip: Save ${twilioNumber} as "Textabite" in your contacts so you always know it's me! You can also text "how'd I do today?", snap a photo of a meal, or text "help" to see everything I can do.`);
+            await sendSms(from, `💡 Save (573) GO-HEALTH as "Textabite" in your contacts so you always know it's me! You can also text "how'd I do today?", snap a photo of a meal, or text "help" to see everything I can do.`);
           }, 3000);
         }
 

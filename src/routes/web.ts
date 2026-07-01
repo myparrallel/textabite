@@ -282,7 +282,7 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
       <div class="step-num">1</div>
       <div class="icon">📱</div>
       <h3>Text your meal</h3>
-      <p>Type what you ate — or snap a photo of your plate. Send it to your Textabite number.</p>
+      <p>Type what you ate — or snap a photo of your plate. Text it to <strong>(573) GO-HEALTH</strong>.</p>
     </div>
     <div class="step">
       <div class="step-num">2</div>
@@ -312,7 +312,7 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
       <div class="phone-screen">
         <div class="phone-header">
           <div class="contact">Textabite</div>
-          <div class="number">Your Textabite number</div>
+          <div class="number">(573) GO-HEALTH</div>
         </div>
         <div class="phone-msgs">
           <div class="pmsg sent">2 scrambled eggs and whole wheat toast</div>
@@ -339,7 +339,7 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
       </div>
       <div class="photo-step">
         <div class="icon">💬</div>
-        <p>Text it to your Textabite number</p>
+        <p>Text it to <strong>(573) GO-HEALTH</strong></p>
       </div>
       <div class="photo-step">
         <div class="icon">🤖</div>
@@ -735,7 +735,7 @@ function successPage(): string {
     <h1>You're all set!</h1>
     <p>Welcome to Textabite. Your subscription is active.</p>
     <p class="highlight">Text your first meal to get started!</p>
-    <p style="margin-top:16px; font-size:0.9rem;">Just send any meal description to your Textabite number and we'll reply with the nutrition breakdown instantly.</p>
+    <p style="margin-top:16px; font-size:0.9rem;">Just text any meal to <strong>(573) GO-HEALTH</strong> and we'll reply with the nutrition breakdown instantly.</p>
     <a href="/">Back to home</a>
   </div>
 </body>
