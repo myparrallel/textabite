@@ -478,7 +478,7 @@ ${waitlist === 'success' ? `<div style="background:#d1fae5;color:#065f46;text-al
       <div class="stars">★★★★★</div>
       <p>"I've tried every calorie app. I always quit after a week because logging is a chore. Textabite is the first thing that actually fits my life — I just text it like I'd text a friend."</p>
       <div class="author">Marcus T.</div>
-      <div class="role">Lost 18 lbs in 3 months</div>
+      <div class="role">Using Textabite for 3 months</div>
     </div>
     <div class="testi">
       <div class="stars">★★★★★</div>
